@@ -1,0 +1,1429 @@
+{
+	"info": {
+		"_postman_id": "589234af-6008-4036-bd63-69599eda4ce0",
+		"name": "Restful Booker Platform",
+		"description": "[https://automationintesting.online](https://automationintesting.online)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23425478"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Create Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"try {",
+									"    var jsonData = pm.response.json();",
+									"",
+									"    if (jsonData.token) {",
+									"        pm.test(\"Token field is present\", function () {",
+									"            pm.expect(jsonData).to.have.property(\"token\");",
+									"        });",
+									"",
+									"        pm.test(\"Token is a non-empty string\", function () {",
+									"            pm.expect(jsonData.token).to.be.a(\"string\").and.to.not.be.empty;",
+									"        });",
+									"",
+									"        pm.collectionVariables.set('token', jsonData.token);",
+									"    }",
+									"} catch (e) {",
+									"    console.warn(\"Response is not JSON or does not contain token\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "A request that allows you to create a `token` that can be used by other requests to authenticate yourself."
+					},
+					"response": []
+				},
+				{
+					"name": "Validate Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Response has 'valid' field\", function () {",
+									"    pm.expect(jsonData).to.have.property(\"valid\");",
+									"});",
+									"",
+									"pm.test(\"'valid' field is a boolean\", function () {",
+									"    pm.expect(jsonData.valid).to.be.a(\"boolean\");",
+									"});",
+									"",
+									"pm.test(\"Token is valid\", function () {",
+									"    pm.expect(jsonData.valid).to.eql(true);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"{{token}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/validate",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"validate"
+							]
+						},
+						"description": "A request that allows you to validate whether a token is valid or not. The `token` is added to the body of the request."
+					},
+					"response": []
+				}
+			],
+			"description": "Includes endpoints responsible for managing who can and cannot make specific calls within the application."
+		},
+		{
+			"name": "Booking",
+			"item": [
+				{
+					"name": "Get Bookings",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"const roomid = Number(pm.request.url.query.find(q => q.key === \"roomid\")?.value);",
+									"",
+									"pm.test(\"Response has 'bookings' array\", function () {",
+									"    pm.expect(jsonData).to.have.property(\"bookings\").that.is.an(\"array\");",
+									"});",
+									"",
+									"pm.test(\"Check if the response contains the correct booking information\", function () {",
+									"    jsonData.bookings.forEach(booking => {",
+									"        pm.expect(booking.roomid).to.eql(roomid);",
+									"        pm.expect(booking.firstname).to.be.a(\"string\");",
+									"        pm.expect(booking.lastname).to.be.a(\"string\");",
+									"        pm.expect(booking.depositpaid).to.be.a(\"boolean\");",
+									"",
+									"        pm.expect(booking.bookingdates).to.be.an(\"object\");",
+									"        pm.expect(booking.bookingdates).to.have.property(\"checkin\").that.matches(/^\\d{4}-\\d{2}-\\d{2}$/);",
+									"        pm.expect(booking.bookingdates).to.have.property(\"checkout\").that.matches(/^\\d{4}-\\d{2}-\\d{2}$/);",
+									"    });",
+									"});",
+									"",
+									"pm.test(\"Each booking has correct structure\", function () {",
+									"    jsonData.bookings.forEach(booking => {",
+									"        pm.expect(booking).to.include.all.keys(",
+									"            'bookingid',",
+									"            'roomid',",
+									"            'firstname',",
+									"            'lastname',",
+									"            'depositpaid',",
+									"            'bookingdates'",
+									"        );",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/booking?roomid=2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"booking"
+							],
+							"query": [
+								{
+									"key": "roomid",
+									"value": "2"
+								}
+							]
+						},
+						"description": "A simple request that returns all the bookings for a specific room. The request contains an optional querystring of `roomid`"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response body is empty\", function () {",
+									"    pm.expect(pm.response.text()).to.eql('[]');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roomid\": \"2\",\n    \"firstname\": \"Test\",\n    \"lastname\": \"User\",\n    \"depositpaid\": false,\n    \"email\": \"test.user@gmail.com\",\n    \"phone\": \"01234567890\",\n    \"bookingdates\": {\n        \"checkin\": \"{{checkinDate}}\",\n        \"checkout\": \"{{checkoutDate}}\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/booking",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"booking"
+							]
+						},
+						"description": "A request that allows you to create a booking within the Booking API."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Booking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Response has success: true\", function () {",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"    pm.expect(jsonData).to.have.property(\"success\", true);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roomid\": \"{{roomId}}\",\n    \"firstname\": \"James\",\n    \"lastname\": \"Dean\",\n    \"depositpaid\": true,\n    \"bookingdates\": {\n        \"checkin\": \"{{checkinDate}}\",\n        \"checkout\": \"{{checkoutDate}}\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/booking/:bookingId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"booking",
+								":bookingId"
+							],
+							"variable": [
+								{
+									"key": "bookingId",
+									"value": "{{bookingId}}"
+								}
+							]
+						},
+						"description": "A request that allows you to update a booking's details within the booking API. To update other bookings, simply update the booking ID from '1' to a different booking ID number."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Booking",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();",
+									"",
+									"pm.test(\"Response indicates success\", function () {",
+									"    pm.expect(response).to.have.property(\"success\", true);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/booking/:bookingId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"booking",
+								":bookingId"
+							],
+							"variable": [
+								{
+									"key": "bookingId",
+									"value": "{{bookingId}}"
+								}
+							]
+						},
+						"description": "A request that allows you to delete a booking's details within the booking API. To delete other bookings, simply update the booking ID from '1' to a different booking ID number."
+					},
+					"response": []
+				}
+			],
+			"description": "Includes endpoints responsible for managing the bookings within the platform."
+		},
+		{
+			"name": "Branding",
+			"item": [
+				{
+					"name": "Get Branding",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Has all required root properties\", function () {",
+									"    pm.expect(jsonData).to.have.all.keys(\"name\", \"map\", \"logoUrl\", \"description\", \"directions\", \"contact\", \"address\");",
+									"});",
+									"",
+									"pm.test(\"Name and logoUrl are valid strings\", function () {",
+									"    pm.expect(jsonData.name).to.be.a(\"string\").and.to.not.be.empty;",
+									"    pm.expect(jsonData.logoUrl).to.be.a(\"string\").and.to.match(",
+									"        /^(\\/images\\/.*|https?:\\/\\/.*)\\/.*\\.(jpg|jpeg|png|gif|webp|svg)$/i",
+									"    );",
+									"});",
+									"",
+									"pm.test(\"Description and directions are non-empty strings\", function () {",
+									"    pm.expect(jsonData.description).to.be.a(\"string\").and.to.not.be.empty;",
+									"    pm.expect(jsonData.directions).to.be.a(\"string\").and.to.not.be.empty;",
+									"});",
+									"",
+									"pm.test(\"Map contains valid latitude and longitude\", function () {",
+									"    pm.expect(jsonData.map).to.have.keys(\"latitude\", \"longitude\");",
+									"    pm.expect(jsonData.map.latitude).to.be.a(\"number\").and.to.be.within(-90, 90);",
+									"    pm.expect(jsonData.map.longitude).to.be.a(\"number\").and.to.be.within(-180, 180);",
+									"});",
+									"",
+									"pm.test(\"Contact object is valid\", function () {",
+									"    const contact = jsonData.contact;",
+									"    pm.expect(contact).to.have.keys(\"name\", \"phone\", \"email\");",
+									"",
+									"    pm.expect(contact.name).to.be.a(\"string\").and.to.not.be.empty;",
+									"    pm.expect(contact.phone).to.be.a(\"string\").and.to.match(/^\\d{11,}$/);",
+									"    pm.expect(contact.email).to.be.a(\"string\").and.to.match(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/);",
+									"});",
+									"",
+									"pm.test(\"Address object is valid\", function () {",
+									"    const address = jsonData.address;",
+									"    pm.expect(address).to.have.all.keys(\"line1\", \"line2\", \"postTown\", \"county\", \"postCode\");",
+									"",
+									"    Object.values(address).forEach(value => {",
+									"        pm.expect(value).to.be.a(\"string\").and.to.not.be.empty;",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/branding",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branding"
+							]
+						},
+						"description": "A simple request that allows you to read the branding details"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Branding",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Response has success: true\", function () {",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"    pm.expect(jsonData).to.have.property(\"success\", true);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Shady Meadows B&B\",\n    \"map\": {\n        \"latitude\": 52.6351204,\n        \"longitude\": 1.2733774\n    },\n    \"logoUrl\": \"https://www.mwtestconsultancy.co.uk/img/rbp-logo.png\",\n    \"description\": \"Welcome to Shady Meadows, a delightful Bed & Breakfast nestled in the hills on Newingtonfordburyshire. A place so beautiful you will never want to leave. All our rooms have comfortable beds and we provide breakfast from the locally sourced supermarket. It is a delightful place.\",\n    \"directions\": \"Welcome to Shady Meadows, a delightful Bed & Breakfast nestled in the hills on Newingtonfordburyshire. A place so beautiful you will never want to leave. All our rooms have comfortable beds and we provide breakfast from the locally sourced supermarket. It is a delightful place.\",\n    \"contact\": {\n        \"name\": \"Shady Meadows B&B\",\n        \"phone\": \"012345678901\",\n        \"email\": \"fake@fakeemail.com\"\n    },\n    \"address\": {\n        \"line1\": \"Shady Meadows B&B\",\n        \"line2\": \"Shadows valley\",\n        \"postTown\": \"Newingtonfordburyshire\",\n        \"county\": \"Dilbery\",\n        \"postCode\": \"N1 1AA\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/branding",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branding"
+							]
+						},
+						"description": "A request that allows you to update the branding details."
+					},
+					"response": []
+				}
+			],
+			"description": "Includes enpoints responsible for providing the home page details for the application."
+		},
+		{
+			"name": "Message",
+			"item": [
+				{
+					"name": "Get Messages",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Response has 'messages' array\", function () {",
+									"    pm.expect(jsonData).to.have.property(\"messages\");",
+									"    pm.expect(jsonData.messages).to.be.an(\"array\");",
+									"});",
+									"",
+									"pm.test(\"At least one message exists\", function () {",
+									"    pm.expect(jsonData.messages.length).to.be.above(0);",
+									"});",
+									"",
+									"pm.test(\"Each message has required properties\", function () {",
+									"    jsonData.messages.forEach((msg) => {",
+									"        pm.expect(msg).to.have.all.keys(",
+									"            'id', ",
+									"            'name', ",
+									"            'subject', ",
+									"            'read');",
+									"",
+									"        pm.expect(msg.id).to.be.a(\"number\");",
+									"        pm.expect(msg.name).to.be.a(\"string\").and.to.not.be.empty;",
+									"        pm.expect(msg.subject).to.be.a(\"string\").and.to.not.be.empty;",
+									"        pm.expect(msg.read).to.be.a(\"boolean\");",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/message",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"message"
+							]
+						},
+						"description": "A simple request that returns all messages from the message API."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Message",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const msg = pm.response.json();",
+									"",
+									"pm.test(\"Response has correct structure\", function () {",
+									"    pm.expect(msg).to.have.all.keys(",
+									"        \"messageid\",",
+									"        \"name\",",
+									"        \"email\",",
+									"        \"phone\",",
+									"        \"subject\",",
+									"        \"description\"",
+									"    );",
+									"})",
+									"",
+									"pm.test(\"Response has expected message details\", function () {",
+									"    pm.expect(msg.messageid).to.be.a(\"number\");",
+									"    pm.expect(msg.name).to.be.a(\"string\").and.to.not.be.empty;",
+									"    pm.expect(msg.email).to.be.a(\"string\").and.to.match(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/);",
+									"    pm.expect(msg.phone).to.be.a(\"string\").and.to.not.be.empty;",
+									"    pm.expect(msg.subject).to.be.a(\"string\").and.to.not.be.empty;",
+									"    pm.expect(msg.description).to.be.a(\"string\").and.to.not.be.empty;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/message/:messageId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"message",
+								":messageId"
+							],
+							"variable": [
+								{
+									"key": "messageId",
+									"value": "{{messageId}}"
+								}
+							]
+						},
+						"description": "A simple request that returns the details of a specific message. To access other messages, simply update the message ID of '1' to a different message ID number."
+					},
+					"response": []
+				},
+				{
+					"name": "Unread Count",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response has count property and debug object\", function () {",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    pm.expect(jsonData).to.have.property(\"count\");",
+									"    pm.expect(jsonData.count).to.be.a(\"number\");",
+									"",
+									"    pm.expect(jsonData).to.have.property(\"debug\");",
+									"    pm.expect(jsonData.debug).to.be.an(\"object\");",
+									"",
+									"    pm.expect(jsonData.debug).to.have.property(\"rawResponse\");",
+									"    pm.expect(jsonData.debug.rawResponse).to.be.a(\"string\");",
+									"",
+									"    pm.expect(jsonData.debug).to.have.property(\"headers\");",
+									"    pm.expect(jsonData.debug.headers).to.be.an(\"object\");",
+									"",
+									"    pm.expect(jsonData.debug).to.have.property(\"url\");",
+									"    pm.expect(jsonData.debug.url).to.be.a(\"string\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/message/count",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"message",
+								"count"
+							]
+						},
+						"description": "A simple request that returns the count of how many messages are unread."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Response has success: true\", function () {",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"    pm.expect(jsonData).to.have.property(\"success\", true);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"James Dean\",\n    \"email\": \"james@email.com\",\n    \"phone\": \"01402 619211\",\n    \"subject\": \"Booking enquiry\",\n    \"description\": \"I would like to book a room at your place\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"message"
+							]
+						},
+						"description": "A request that allows you to create a message in the Message API."
+					},
+					"response": []
+				},
+				{
+					"name": "Mark As Read",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Response has success: true\", function () {",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"    pm.expect(jsonData).to.have.property(\"success\", true);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/message/:messageId/read",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"message",
+								":messageId",
+								"read"
+							],
+							"variable": [
+								{
+									"key": "messageId",
+									"value": "{{messageId}}"
+								}
+							]
+						},
+						"description": "A request that allows you to mark a specific message as read. To mark a different message as read, simply update the message ID of '1' to a different message ID number."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Response has success: true\", function () {",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"    pm.expect(jsonData).to.have.property(\"success\", true);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/message/:messageId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"message",
+								":messageId"
+							],
+							"variable": [
+								{
+									"key": "messageId",
+									"value": "{{messageId}}"
+								}
+							]
+						},
+						"description": "A request that allows you to delete a message. To delete a different message, simply update the message ID of '1' to a different message ID number."
+					},
+					"response": []
+				}
+			],
+			"description": "Includes endpoints responsible for the management of Messages within the platform."
+		},
+		{
+			"name": "Room",
+			"item": [
+				{
+					"name": "Get Rooms",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response has 'rooms' array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"rooms\");",
+									"    pm.expect(jsonData.rooms).to.be.an(\"array\");",
+									"    pm.expect(jsonData.rooms.length).to.be.above(0);",
+									"});",
+									"",
+									"pm.test(\"Each room has expected properties with correct types\", function () {",
+									"    const rooms = pm.response.json().rooms;",
+									"    rooms.forEach(room => {",
+									"        pm.expect(room).to.have.all.keys(",
+									"            'roomid',",
+									"            'roomName',",
+									"            'type',",
+									"            'accessible',",
+									"            'image',",
+									"            'description',",
+									"            'features',",
+									"            'roomPrice'",
+									"        );",
+									"",
+									"        pm.expect(room.roomid).to.be.a(\"number\");",
+									"        pm.expect(room.roomName).to.be.a(\"string\");",
+									"        pm.expect(room.type).to.be.a(\"string\");",
+									"        pm.expect(room.accessible).to.be.a(\"boolean\");",
+									"        pm.expect(room.image).to.be.a(\"string\");",
+									"        pm.expect(room.description).to.be.a(\"string\");",
+									"        pm.expect(room.features).to.be.an(\"array\");",
+									"        room.features.forEach(feature => {",
+									"            pm.expect(feature).to.be.a(\"string\");",
+									"        });",
+									"        pm.expect(room.roomPrice).to.be.a(\"number\");",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/room",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"room"
+							]
+						},
+						"description": "A simple GET request that returns all the Rooms within the Room API."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Room",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Response has correct room properties', () => {",
+									"    const room = pm.response.json();",
+									"",
+									"    pm.expect(room).to.have.all.keys(",
+									"        'roomid',",
+									"        'roomName',",
+									"        'type',",
+									"        'accessible',",
+									"        'image',",
+									"        'description',",
+									"        'features',",
+									"        'roomPrice'",
+									"    );",
+									"",
+									"    pm.expect(room.roomid).to.be.a('number');",
+									"    pm.expect(room.roomName).to.be.a('string');",
+									"    pm.expect(room.type).to.be.a('string');",
+									"    pm.expect(room.accessible).to.be.a('boolean');",
+									"    pm.expect(room.image).to.be.a('string');",
+									"    pm.expect(room.description).to.be.a('string');",
+									"    pm.expect(room.features).to.be.an('array');",
+									"    room.features.forEach(feature => pm.expect(feature).to.be.a('string'));",
+									"    pm.expect(room.roomPrice).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/room/:roomid",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"room",
+								":roomid"
+							],
+							"variable": [
+								{
+									"key": "roomid",
+									"value": "{{roomId}}"
+								}
+							]
+						},
+						"description": "A simple GET request that returns you the details of a specific room. To get different room details in the API, change the number 1 to a different room ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Room",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Response has success: true\", function () {",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"    pm.expect(jsonData).to.have.property(\"success\", true);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roomName\": \"{{randomRoomName}}\",\n    \"type\": \"Suite\",\n    \"accessible\": true,\n    \"image\": \"https://blog.postman.com/wp-content/uploads/2014/07/logo.png\",\n    \"description\": \"This is room {{randomRoomName}}, dare you enter?\",\n    \"roomPrice\": 500,\n    \"features\": [\n        \"WiFi\", \"Safe\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/room",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"room"
+							]
+						},
+						"description": "A request that allows you to create a Room."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Room",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Response has success: true\", function () {",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"    pm.expect(jsonData).to.have.property(\"success\", true);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"roomName\": \"{{randomRoomName}}\",\n    \"type\": \"Suite\",\n    \"accessible\": true,\n    \"image\": \"https://blog.postman.com/wp-content/uploads/2014/07/logo.png\",\n    \"description\": \"This is room {{randomRoomName}}, dare you enter?\",\n    \"roomPrice\": 500,\n    \"features\": [\n        \"WiFi\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/room/:roomId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"room",
+								":roomId"
+							],
+							"variable": [
+								{
+									"key": "roomId",
+									"value": "{{roomId}}"
+								}
+							]
+						},
+						"description": "A request that allows you to update a specific Room. To update the details of a different room within the API, change the number 1 to a different room ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Room",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Response has success: true\", function () {",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"    pm.expect(jsonData).to.have.property(\"success\", true);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/room/:roomId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"room",
+								":roomId"
+							],
+							"variable": [
+								{
+									"key": "roomId",
+									"value": "{{roomId}}"
+								}
+							]
+						},
+						"description": "A request that allows you to delete a specific Room. To delete a different room within the API, change the number 1 to a different room ID."
+					},
+					"response": []
+				}
+			],
+			"description": "Includes enpoints responsible for the management of Rooms within the platform."
+		},
+		{
+			"name": "Report",
+			"item": [
+				{
+					"name": "Get Specific Room Report",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response is an array\", () => {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Each report object has required properties\", () => {",
+									"    const jsonData = pm.response.json();",
+									"    jsonData.forEach(report => {",
+									"        pm.expect(report).to.have.property(\"start\");",
+									"        pm.expect(report).to.have.property(\"end\");",
+									"        pm.expect(report).to.have.property(\"title\");",
+									"        pm.expect(report.title).to.equal(\"Unavailable\");",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/report/room/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"report",
+								"room",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{roomId}}"
+								}
+							]
+						},
+						"description": "A request that allows you to get report details for a specific room."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Rooms Report",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response has 'report' array\", () => {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"report\");",
+									"    pm.expect(jsonData.report).to.be.an(\"array\");",
+									"});",
+									"",
+									"pm.test(\"Each report item has required properties with correct types\", () => {",
+									"    const reports = pm.response.json().report;",
+									"    reports.forEach(item => {",
+									"        pm.expect(item).to.have.property(\"start\");",
+									"        pm.expect(item).to.have.property(\"end\");",
+									"        pm.expect(item).to.have.property(\"title\");",
+									"        ",
+									"        pm.expect(item.start).to.be.a(\"string\");",
+									"        pm.expect(item.end).to.be.a(\"string\");",
+									"        pm.expect(item.title).to.be.a(\"string\");",
+									"    });",
+									"});",
+									"",
+									"pm.collectionVariables.unset(\"initialSetupDone\");"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "token={{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/report",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"report"
+							]
+						},
+						"description": "A request that returns a report of availability in all rooms."
+					},
+					"response": []
+				}
+			],
+			"description": "Includes endpoints responsible for creating a Report for Calendar UI components to use within the platform."
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"if (pm.collectionVariables.get(\"initialSetupDone\") !== \"true\") {",
+					"    // Format Date to YYYY-MM-DD",
+					"    const formatDate = date => date.toISOString().split('T')[0];",
+					"",
+					"    // Generate Random Check-in and Check-out Dates",
+					"    (() => {",
+					"        const today = new Date();",
+					"        const checkin = new Date(today);",
+					"        checkin.setDate(today.getDate() + Math.floor(Math.random() * 31));",
+					"",
+					"        const checkout = new Date(checkin);",
+					"        checkout.setDate(checkin.getDate() + Math.floor(Math.random() * 6) + 2);",
+					"",
+					"        pm.collectionVariables.set(\"checkinDate\", formatDate(checkin));",
+					"        pm.collectionVariables.set(\"checkoutDate\", formatDate(checkout));",
+					"    })();",
+					"",
+					"    const baseUrl = pm.collectionVariables.get(\"baseUrl\");",
+					"",
+					"    // Generic Request Handler",
+					"    function fetchAndSetVariable({ url, method = \"GET\", headers = [], jsonPath, variableName, rootKey, logLabel }) {",
+					"        pm.sendRequest({ url, method, header: headers }, function (err, res) {",
+					"            if (err || !res) {",
+					"                console.error(`Failed to fetch ${logLabel}:`, err);",
+					"                return;",
+					"            }",
+					"",
+					"            try {",
+					"                const data = res.json();",
+					"                const items = rootKey ? data[rootKey] : data;",
+					"",
+					"                if (!Array.isArray(items) || items.length === 0) {",
+					"                    console.warn(`No ${logLabel} found`);",
+					"                    return;",
+					"                }",
+					"",
+					"                const randomItem = items[Math.floor(Math.random() * items.length)];",
+					"                const value = jsonPath ? jsonPath(randomItem) : randomItem;",
+					"",
+					"                pm.collectionVariables.set(variableName, value);",
+					"",
+					"            } catch (e) {",
+					"                console.error(`Failed to parse ${logLabel} response:`, e);",
+					"            }",
+					"        });",
+					"    }",
+					"",
+					"    // Fetch Random Booking ID (roomid = 2)",
+					"    fetchAndSetVariable({",
+					"        url: `${baseUrl}/booking?roomid=2`,",
+					"        headers: [{ key: \"Cookie\", value: `token=${pm.collectionVariables.get(\"token\")}` }],",
+					"        rootKey: \"bookings\",",
+					"        jsonPath: item => item.bookingid,",
+					"        variableName: \"bookingId\",",
+					"        logLabel: \"bookingId\"",
+					"    });",
+					"",
+					"    // Fetch Random Message ID",
+					"    fetchAndSetVariable({",
+					"        url: `${baseUrl}/message`,",
+					"        variableName: \"messageId\",",
+					"        rootKey: \"messages\",",
+					"        jsonPath: item => item.id,",
+					"        logLabel: \"messageId\"",
+					"    });",
+					"",
+					"    // Fetch Random Room ID",
+					"    fetchAndSetVariable({",
+					"        url: `${baseUrl}/room`,",
+					"        variableName: \"roomId\",",
+					"        rootKey: \"rooms\",",
+					"        jsonPath: item => item.roomid,",
+					"        logLabel: \"roomId\"",
+					"    });",
+					"",
+					"    // Generate random room name",
+					"    function randomRoomName(length) {",
+					"        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';",
+					"        let result = '';",
+					"        for (let i = 0; i < length; i++) {",
+					"            result += chars.charAt(Math.floor(Math.random() * chars.length));",
+					"        }",
+					"        return result;",
+					"    }",
+					"",
+					"    const randomName = randomRoomName(3);",
+					"    pm.collectionVariables.set('randomRoomName', randomName);",
+					"",
+					"    pm.collectionVariables.set(\"initialSetupDone\", true);",
+					"}    "
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"pm.test(\"Response time is less than 7 seconds\", function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(6000);",
+					"});",
+					"",
+					"pm.test(\"Status code is 200\", function () {",
+					"    pm.response.to.have.status(200);",
+					"});",
+					"",
+					"pm.test(\"Response is JSON\", function () {",
+					"    pm.response.to.be.withBody;",
+					"    pm.response.to.be.json;",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://automationintesting.online/api",
+			"type": "string"
+		},
+		{
+			"key": "authorization",
+			"value": "YWRtaW46cGFzc3dvcmQxMjM=",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "checkinDate",
+			"value": ""
+		},
+		{
+			"key": "checkoutDate",
+			"value": ""
+		},
+		{
+			"key": "bookingId",
+			"value": ""
+		},
+		{
+			"key": "messageId",
+			"value": ""
+		},
+		{
+			"key": "roomId",
+			"value": ""
+		},
+		{
+			"key": "randomRoomName",
+			"value": ""
+		}
+	]
+}
