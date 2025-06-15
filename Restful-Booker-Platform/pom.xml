@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd)">
     <modelVersion>4.0.0</modelVersion>
 
     <!-- Basic project coordinates -->
@@ -11,15 +10,26 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
+        <!-- Java version for compilation. Ensure your JDK installation matches this. -->
         <maven.compiler.source>22</maven.compiler.source>
         <maven.compiler.target>22</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Dependency Versions -->
         <junit.jupiter.version>5.10.0</junit.jupiter.version>
         <rest.assured.version>5.4.0</rest.assured.version>
+        <jackson.databind.version>2.17.1</jackson.databind.version> <!-- Updated to a more recent stable -->
+        <commons.io.version>2.16.1</commons.io.version>             <!-- Updated to a more recent stable -->
+        <assertj.core.version>3.26.0</assertj.core.version>         <!-- Updated to a more recent stable -->
+        <commons.codec.version>1.16.1</commons.codec.version>       <!-- Updated to a more recent stable -->
+
+        <!-- Plugin Versions -->
+        <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version> <!-- IMPORTANT: Updated to a recent stable -->
+        <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
     </properties>
 
     <dependencies>
-        <!-- JUnit Jupiter API and Engine for testing -->
+        <!-- JUnit Jupiter: Includes API, Engine, and Params for comprehensive testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -27,7 +37,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Rest Assured core -->
+        <!-- Rest Assured: Core library for HTTP API testing -->
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
@@ -35,14 +45,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Apache Commons Codec library (utility functions, encoding/decoding) -->
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.15</version>
-        </dependency>
-
-        <!-- JSON Path support -->
+        <!-- Rest Assured: JSON Path for easy parsing of JSON responses -->
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>json-path</artifactId>
@@ -50,7 +53,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- XML Path support if needed -->
+        <!-- Rest Assured: XML Path for parsing XML responses (if applicable) -->
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>xml-path</artifactId>
@@ -58,39 +61,70 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Jackson Databind for JSON serialization/deserialization of Java objects -->
+        <!-- Jackson Databind: Essential for converting JSON to/from Java objects (POJOs) like LoginRequest -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.15.2</version> <!-- or latest stable -->
-            <scope>test</scope>
+            <version>${jackson.databind.version}</version>
+            <scope>test</scope> <!-- Scoped as test as it's mainly used by TestUtils for test data -->
         </dependency>
 
-        <!-- Apache Commons IO library for easy IO utilities, such as reading files as Strings in tests -->
+        <!-- Apache Commons IO: Provides utility functions for I/O operations, like reading files -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.14.0</version>
+            <version>${commons.io.version}</version>
+            <scope>test</scope> <!-- Likely used only in test scope for TestUtils -->
         </dependency>
 
-        <!-- AssertJ for fluent assertions (optional but recommended) -->
+        <!-- AssertJ: Fluent assertions library for writing more readable and expressive assertions -->
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.24.2</version>
+            <version>${assertj.core.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Apache Commons Codec: Provides common encoders and decoders (e.g., Base64).
+             Often a transitive dependency, but explicitly declared if directly used. -->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${commons.codec.version}</version>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!-- Surefire plugin for running tests -->
+            <!-- Maven Compiler Plugin: Ensures proper compilation of Java source code.
+                 Explicitly defined to use a modern version compatible with Java 22. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <configuration>
+                    <!-- These properties are inherited from <properties> but explicitly
+                         setting them here makes the plugin configuration clear. -->
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Surefire Plugin: Responsible for running unit tests.
+                 Configured to avoid module path issues with JUnit 5 on Java 9+. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>${maven.surefire.plugin.version}</version>
                 <configuration>
-                    <useModulePath>false</useModulePath> <!-- avoids issues with Java 9+ -->
+                    <useModulePath>false</useModulePath>
+                    <!-- Optional: If its needed to specify include/exclude patterns for tests.
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                    </includes>
+                    -->
                 </configuration>
             </plugin>
         </plugins>
