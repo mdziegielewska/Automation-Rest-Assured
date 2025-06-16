@@ -1,4 +1,4 @@
-# Automation-Rest-Assured
+# REST-assured Automation Tests for Restful Booker Platform APIs
 
 ## Project Overview
 
