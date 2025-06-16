@@ -53,4 +53,18 @@ public class TestUtils {
             return OBJECT_MAPPER.readValue(inputStream, LoginRequest.class);
         }
     }
+
+    /**
+     * Loads LoginRequest object from a JSON file.
+     * @param resourcePath The path to the JSON file containing login data.
+     * @return A LoginRequest object populated with data from the file.
+     * @throws RuntimeException if loading the file fails.
+     */
+    public static LoginRequest loadLoginRequest(String resourcePath) {
+        try {
+            return TestUtils.loadLoginRequestFromFile(resourcePath);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load test data from: " + resourcePath, e);
+        }
+    }
 }

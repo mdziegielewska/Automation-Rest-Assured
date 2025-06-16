@@ -1,8 +1,6 @@
 package tests.authorization;
 
-import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
-import io.restassured.specification.RequestSpecification;
 import models.LoginRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,16 +10,15 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import tests.base.BaseTest;
-import tests.utils.TestUtils;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static io.restassured.RestAssured.*;
+import static constants.ApiConstants.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static tests.utils.TestUtils.loadLoginRequest;
 
 
 public class CreateTokenTests extends BaseTest {
@@ -35,39 +32,6 @@ public class CreateTokenTests extends BaseTest {
         synchronized (generatedTokens) {
             generatedTokens.clear();
         }
-    }
-
-    // --- Constants for better readability and maintainability ---
-    private static final String AUTH_LOGIN_ENDPOINT = "/auth/login";
-    private static final String TOKEN_JSON_PATH = "token";
-    private static final String ERROR_JSON_PATH = "error";
-    private static final String INVALID_CREDENTIALS_ERROR_MESSAGE = "Invalid credentials";
-
-    // --- Test Data Paths ---
-    private static final String CORRECT_DATA_PATH = "testData/authorization/correctData.json";
-    private static final String INCORRECT_DATA_PATH = "testData/authorization/incorrectData.json";
-
-    /**
-     * Helper method to load LoginRequest object from a JSON file.
-     * @param resourcePath The path to the JSON file containing login data.
-     * @return A LoginRequest object populated with data from the file.
-     * @throws RuntimeException if loading the file fails.
-     */
-    private LoginRequest loadLoginRequest(String resourcePath) {
-        try {
-            return TestUtils.loadLoginRequestFromFile(resourcePath);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load test data from: " + resourcePath, e);
-        }
-    }
-
-    /**
-     * Provides a base RequestSpecification with content type set to JSON.
-     * This avoids repetition of `given().contentType("application/json")`.
-     * @return A RequestSpecification pre-configured for JSON content.
-     */
-    private static RequestSpecification givenAuthRequest() {
-        return given().contentType(ContentType.JSON);
     }
 
     // --- Assertion Helper Methods ---
@@ -86,14 +50,14 @@ public class CreateTokenTests extends BaseTest {
      */
     private void assertFailedLoginResponse(ValidatableResponse response) {
         response.statusCode(401)
-                .body(ERROR_JSON_PATH, equalTo(CreateTokenTests.INVALID_CREDENTIALS_ERROR_MESSAGE));
+                .body(ERROR_JSON_PATH, equalTo(INVALID_CREDENTIALS_ERROR_MESSAGE));
     }
 
     // --- Test Cases ---
     @Test
     @DisplayName("Should create token successfully with valid credentials")
     public void testSuccessfulLogin() {
-        LoginRequest loginRequest = loadLoginRequest(CORRECT_DATA_PATH);
+        LoginRequest loginRequest = loadLoginRequest(CORRECT_LOGIN_PATH);
 
         ValidatableResponse response = givenAuthRequest()
                 .body(loginRequest)
@@ -105,9 +69,9 @@ public class CreateTokenTests extends BaseTest {
     }
 
     @Test
-    @DisplayName("Should fail login with incorrect credentials from file")
+    @DisplayName("Should fail login with incorrect credentials")
     public void testFailedLoginWithIncorrectCredentials() {
-        LoginRequest loginRequest = loadLoginRequest(INCORRECT_DATA_PATH);
+        LoginRequest loginRequest = loadLoginRequest(INCORRECT_LOGIN_PATH);
 
         ValidatableResponse response = givenAuthRequest()
                 .body(loginRequest)
@@ -163,7 +127,7 @@ public class CreateTokenTests extends BaseTest {
     @RepeatedTest(5)
     @DisplayName("Each repeated login request should create a new, unique token")
     public void testRepeatedLoginTokenUniqueness() {
-        LoginRequest loginRequest = loadLoginRequest(CORRECT_DATA_PATH);
+        LoginRequest loginRequest = loadLoginRequest(CORRECT_LOGIN_PATH);
 
         String token = givenAuthRequest()
                 .body(loginRequest)
