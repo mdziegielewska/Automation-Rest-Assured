@@ -19,12 +19,15 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static tests.utils.TestUtils.loadLoginRequest;
+import static tests.utils.assertions.LoginAssertions.assertFailedLoginResponse;
+import static tests.utils.assertions.LoginAssertions.assertSuccessfulLoginResponse;
 
 
 public class CreateTokenTests extends BaseTest {
 
-    // Thread-safe set to keep track of generated tokens during repeated tests
-    // to ensure each token is unique across repeated login attempts.
+    /** Thread-safe set to keep track of generated tokens during repeated tests
+     * to ensure each token is unique across repeated login attempts.
+     */
     private static final Set<String> generatedTokens = new HashSet<>();
 
     @BeforeEach
@@ -34,32 +37,13 @@ public class CreateTokenTests extends BaseTest {
         }
     }
 
-    // --- Assertion Helper Methods ---
-    /**
-     * Asserts that a login response is successful (status 200 and token not null).
-     * @param response The ValidatableResponse object to assert against.
-     */
-    private void assertSuccessfulLoginResponse(ValidatableResponse response) {
-        response.statusCode(200)
-                .body(TOKEN_JSON_PATH, notNullValue());
-    }
-
-    /**
-     * Asserts that a login response indicates failure with specific status code and error message.
-     * @param response The ValidatableResponse object to assert against.
-     */
-    private void assertFailedLoginResponse(ValidatableResponse response) {
-        response.statusCode(401)
-                .body(ERROR_JSON_PATH, equalTo(INVALID_CREDENTIALS_ERROR_MESSAGE));
-    }
-
     // --- Test Cases ---
     @Test
     @DisplayName("Should create token successfully with valid credentials")
     public void testSuccessfulLogin() {
         LoginRequest loginRequest = loadLoginRequest(CORRECT_LOGIN_PATH);
 
-        ValidatableResponse response = givenAuthRequest()
+        ValidatableResponse response = givenRequest()
                 .body(loginRequest)
                 .when()
                 .post(AUTH_LOGIN_ENDPOINT)
@@ -73,13 +57,13 @@ public class CreateTokenTests extends BaseTest {
     public void testFailedLoginWithIncorrectCredentials() {
         LoginRequest loginRequest = loadLoginRequest(INCORRECT_LOGIN_PATH);
 
-        ValidatableResponse response = givenAuthRequest()
+        ValidatableResponse response = givenRequest()
                 .body(loginRequest)
                 .when()
                 .post(AUTH_LOGIN_ENDPOINT)
                 .then();
 
-        assertFailedLoginResponse(response);
+        assertFailedLoginResponse(response, INVALID_CREDENTIALS_ERROR_MESSAGE);
     }
 
     /**
@@ -102,13 +86,13 @@ public class CreateTokenTests extends BaseTest {
     @MethodSource("invalidLoginRequests")
     @DisplayName("Should fail login with various invalid credentials scenarios")
     public void testInvalidCredentials(LoginRequest loginRequest, String displayName) {
-        ValidatableResponse response = givenAuthRequest()
+        ValidatableResponse response = givenRequest()
                 .body(loginRequest)
                 .when()
                 .post(AUTH_LOGIN_ENDPOINT)
                 .then();
 
-        assertFailedLoginResponse(response);
+        assertFailedLoginResponse(response, INVALID_CREDENTIALS_ERROR_MESSAGE);
     }
 
     @Test
@@ -116,7 +100,7 @@ public class CreateTokenTests extends BaseTest {
     public void testMalformedJson() {
         String malformedJson = "{ \"username\": \"admin\", \"password\": \"pass\""; // Missing closing brace
 
-        givenAuthRequest()
+        givenRequest()
                 .body(malformedJson)
                 .when()
                 .post(AUTH_LOGIN_ENDPOINT)
@@ -129,7 +113,7 @@ public class CreateTokenTests extends BaseTest {
     public void testRepeatedLoginTokenUniqueness() {
         LoginRequest loginRequest = loadLoginRequest(CORRECT_LOGIN_PATH);
 
-        String token = givenAuthRequest()
+        String token = givenRequest()
                 .body(loginRequest)
                 .when()
                 .post(AUTH_LOGIN_ENDPOINT)
@@ -143,7 +127,8 @@ public class CreateTokenTests extends BaseTest {
 
         synchronized (generatedTokens) {
             boolean isNew = generatedTokens.add(token);
-            assertTrue(isNew, "Token '" + token + "' should be unique across repeated test runs, but it was duplicated.");
+            assertTrue(isNew, String.format("Token '%s' should be unique across repeated test runs, " +
+                    "but it was duplicated.", token));
         }
     }
 }

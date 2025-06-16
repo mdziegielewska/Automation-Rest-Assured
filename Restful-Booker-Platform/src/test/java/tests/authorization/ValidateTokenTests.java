@@ -18,7 +18,7 @@ public class ValidateTokenTests extends BaseTest {
     @BeforeAll
     public static void setupToken() {
         validAuthToken = getAuthToken();
-        System.out.println("Obtained valid token for validation tests: " + validAuthToken);
+        System.out.printf("Obtained valid token for validation tests: %s", validAuthToken);
     }
 
     @Test
@@ -26,7 +26,7 @@ public class ValidateTokenTests extends BaseTest {
     public void testValidTokenValidation() {
         String requestBody = String.format("{ \"%s\": \"%s\" }", TOKEN_JSON_PATH, validAuthToken);
 
-        givenAuthRequest()
+        givenRequest()
                 .body(requestBody)
                 .when()
                 .post(AUTH_VALIDATE_ENDPOINT)
@@ -41,7 +41,7 @@ public class ValidateTokenTests extends BaseTest {
         String invalidToken = "thisisajustsomeinvalidtokenstringforexample";
         String requestBody = String.format("{ \"%s\": \"%s\" }", TOKEN_JSON_PATH, invalidToken);
 
-        givenAuthRequest()
+        givenRequest()
                 .body(requestBody)
                 .when()
                 .post(AUTH_VALIDATE_ENDPOINT)
@@ -56,7 +56,7 @@ public class ValidateTokenTests extends BaseTest {
         String emptyToken = "";
         String requestBody = String.format("{ \"%s\": \"%s\" }", TOKEN_JSON_PATH, emptyToken);
 
-        givenAuthRequest()
+        givenRequest()
                 .body(requestBody)
                 .when()
                 .post(AUTH_VALIDATE_ENDPOINT)
@@ -68,9 +68,9 @@ public class ValidateTokenTests extends BaseTest {
     @Test
     @DisplayName("Should fail validation for a null token value")
     public void testNullTokenValueValidation() {
-        String requestBody = String.format("{ \"%s\": %s }", TOKEN_JSON_PATH, "null"); // Send actual JSON null
+        String requestBody = String.format("{ \"%s\": %s }", TOKEN_JSON_PATH, "null");
 
-        givenAuthRequest()
+        givenRequest()
                 .body(requestBody)
                 .when()
                 .post(AUTH_VALIDATE_ENDPOINT)
@@ -82,10 +82,9 @@ public class ValidateTokenTests extends BaseTest {
     @Test
     @DisplayName("Should handle malformed token format")
     public void testMalformedTokenFormat() {
-        // Example of malformed token where the value is not a string
         String malformedTokenBody = "{ \"token\": thisisnotastring }";
 
-        givenAuthRequest()
+        givenRequest()
                 .body(malformedTokenBody)
                 .when()
                 .post(AUTH_VALIDATE_ENDPOINT)

@@ -105,9 +105,10 @@
                 <configuration>
                     <!-- These properties are inherited from <properties> but explicitly
                          setting them here makes the plugin configuration clear. -->
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
+                    <source>22</source>
+                    <target>22</target>
                     <encoding>${project.build.sourceEncoding}</encoding>
+                    <compilerArgs>--enable-preview</compilerArgs>
                 </configuration>
             </plugin>
 

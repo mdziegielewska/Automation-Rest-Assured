@@ -16,6 +16,10 @@ import java.util.stream.Collectors;
  */
 public class TestUtils {
 
+    private TestUtils() {
+        // hidden constructor
+    }
+
     /**
      * Reusable ObjectMapper instance for efficient JSON processing.
      */
@@ -30,7 +34,7 @@ public class TestUtils {
     public static String readResourceFile(String filePath) throws IOException {
         try (InputStream inputStream = TestUtils.class.getClassLoader().getResourceAsStream(filePath)) {
             if (inputStream == null) {
-                throw new IOException("Resource file not found on classpath: " + filePath);
+                throw new IOException(String.format("Resource file not found on classpath: %s", filePath));
             }
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
                 return reader.lines().collect(Collectors.joining(System.lineSeparator()));
@@ -48,7 +52,7 @@ public class TestUtils {
     public static LoginRequest loadLoginRequestFromFile(String filePath) throws IOException {
         try (InputStream inputStream = TestUtils.class.getClassLoader().getResourceAsStream(filePath)) {
             if (inputStream == null) {
-                throw new IOException("Resource file not found on classpath: " + filePath);
+                throw new IOException(String.format("Resource file not found on classpath: %s", filePath));
             }
             return OBJECT_MAPPER.readValue(inputStream, LoginRequest.class);
         }
@@ -64,7 +68,7 @@ public class TestUtils {
         try {
             return TestUtils.loadLoginRequestFromFile(resourcePath);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load test data from: " + resourcePath, e);
+            throw new RuntimeException(String.format("Failed to load test data from: %s", resourcePath), e);
         }
     }
 }
