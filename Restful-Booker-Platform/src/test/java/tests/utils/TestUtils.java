@@ -2,13 +2,13 @@ package tests.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import models.request.BookingRequest;
-import models.request.LoginRequest;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import static tests.utils.DateUtils.generateRandomBookingDates;
@@ -97,5 +97,38 @@ public class TestUtils {
         bookingRequest.setRoomid(roomId);
         bookingRequest.setBookingdates(generateRandomBookingDates());
         return bookingRequest;
+    }
+
+    /**
+     * Generates a random positive long number with a specified number of digits.
+     *
+     * @param length The desired number of digits for the long. Must be between 1 and 18 (inclusive, for a long).
+     * @return A positive long number with the specified number of digits.
+     * @throws IllegalArgumentException if length is not within the valid range for a long (1 to 18).
+     */
+    public static long generateLongWithDigits(int length) {
+        if (length <= 0 || length > 18) { // Max 18 digits to comfortably fit in a long
+            throw new IllegalArgumentException("Length must be between 1 and 18 for a long number.");
+        }
+
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder(length);
+
+        sb.append(random.nextInt(9) + 1);
+
+        for (int i = 1; i < length; i++) {
+            sb.append(random.nextInt(10));
+        }
+
+        return Long.parseLong(sb.toString());
+    }
+
+    /**
+     * Generates a 10-character string containing only digits (0-9).
+     * This is a convenience method calling generateNumericString(10).
+     * @return A 10-character string composed of random digits.
+     */
+    public static String generate10DigitNumericString() {
+        return String.valueOf(generateLongWithDigits(10));
     }
 }

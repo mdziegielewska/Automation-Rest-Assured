@@ -18,7 +18,7 @@ public class ValidateTokenTests extends BaseTest {
     @BeforeAll
     public static void setupToken() {
         validAuthToken = getAuthToken();
-        System.out.printf("Obtained valid token for validation tests: %s", validAuthToken);
+        System.out.printf("Obtained valid token for validation tests: %s%n", validAuthToken);
     }
 
     @Test

@@ -9,13 +9,14 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import tests.utils.TestUtils;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static constants.ApiConstants.*;
 import static org.hamcrest.Matchers.*;
 import static tests.base.BaseTest.givenRequest;
-import static tests.utils.TestUtils.buildBookingRequest;
+import static tests.utils.TestUtils.*;
 
 
 public class CreateBookingTests {
@@ -101,7 +102,7 @@ public class CreateBookingTests {
     }
 
     /**
-     * Provides arguments for testing null or empty fields in the BookingRequest.
+     * Provides arguments for testing invalid fields in the BookingRequest.
      */
     private static Stream<Arguments> invalidFieldsProvider() {
         // Scenario 1: Null roomid
@@ -156,7 +157,7 @@ public class CreateBookingTests {
     @Test
     @DisplayName("Should handle booking non-existent room id")
     public void testBookingFailsForNonExistentRoomId() {
-        String nonExistentRoomId = "3000000";
+        String nonExistentRoomId = generate10DigitNumericString();
         BookingRequest bookingForNonExistentRoom = buildBookingRequest(CORRECT_BOOKING_PATH, nonExistentRoomId);
 
         givenRequest()
@@ -170,21 +171,114 @@ public class CreateBookingTests {
                 .body(ERRORS_JSON_PATH, hasItem(BOOKING_CREATION_GENERIC_FAILURE_ERROR_MESSAGE));
     }
 
-    @Test
-    @DisplayName("Should handle invalid formats")
-    public void testBookingFailsWithInvalidDataTypes() {
+    /**
+     * Provides arguments for testing boundary dates in the BookingRequest.
+     */
+    private static Stream<Arguments> boundaryDatesProvider() {
+        // Scenario 1: Checkin and Checkout are the same day (assuming this is valid)
+        LocalDate today = LocalDate.now();
+        BookingRequest sameDayBooking = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        sameDayBooking.setBookingdates(new BookingDates(today.toString(), today.toString()));
 
+        // Scenario 2: Checkout date is before Checkin date (should fail)
+        BookingRequest invalidDateRangeBooking = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        invalidDateRangeBooking.setBookingdates(new BookingDates(today.toString(), today.minusDays(10).toString()));
+
+        // Scenario 3: Booking far in the future (assuming valid)
+        LocalDate futureCheckin = LocalDate.now().plusYears(generateLongWithDigits(2));
+        LocalDate futureCheckout = futureCheckin.plusDays(2);
+        BookingRequest futureBooking = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        futureBooking.setBookingdates(new BookingDates(futureCheckin.toString(), futureCheckout.toString()));
+
+        return Stream.of(
+                Arguments.of(sameDayBooking, "Same booking dates", 500),
+                Arguments.of(invalidDateRangeBooking, "Checkout date before Checkin date", 500),
+                Arguments.of(futureBooking, "Booking far in the future", 200)
+        );
     }
 
-    @Test
+    @ParameterizedTest(name = "{1}")
+    @MethodSource("boundaryDatesProvider")
     @DisplayName("Should handle boundary dates")
-    public void testBookingHandlesBoundaryDates() {
-
+    public void testBookingHandlesBoundaryDates(BookingRequest boundaryDate, String testDescription, Integer statusCode) {
+        givenRequest()
+                .body(boundaryDate)
+                .when()
+                .post(BOOKING_ENDPOINT)
+                .then()
+                .statusCode(statusCode);
     }
 
     @Test
     @DisplayName("Should fail when request has missing fields")
     public void testBookingFailsWithMissingMandatoryFields()  {
+        String malformedJson = "{" +
+                "  \"roomid\": 1," +
+                "  \"firstname\": \"Test\"," +
+                "  \"lastname\": \"User\"," +
+                "  \"bookingdates\": {" +
+                "    \"checkin\": \"2025-07-23\"," +
+                "    \"checkout\": \"2025-07-24\"" +
+                "  }," +
+                "}";
 
+        givenRequest()
+                .body(malformedJson)
+                .when()
+                .post(BOOKING_ENDPOINT)
+                .then()
+                .statusCode(500)
+                .body("", is(empty()));
+    }
+
+    /**
+     * Provides arguments for testing booking creation with invalid data types.
+     */
+    private static Stream<Arguments> invalidDataTypesProvider() {
+        // Scenario 1: Depositpaid sent as a String "false" instead of a boolean false
+        String jsonWithInvalidDepositPaidType = "{" +
+                "  \"roomid\": 1," +
+                "  \"firstname\": \"Another\"," +
+                "  \"lastname\": \"Error\"," +
+                "  \"depositpaid\": \"false\"," + // Invalid: "false" is a string, expects boolean
+                "  \"bookingdates\": {" +
+                "    \"checkin\": \"2025-09-01\"," +
+                "    \"checkout\": \"2025-09-05\"" +
+                "  }," +
+                "  \"email\": \"another.error@example.com\"," +
+                "  \"phone\": \"22233344455\"" +
+                "}";
+
+        // Scenario 1: Phone number sent as an integer
+        String jsonWithIntegerPhone = "{" +
+                "  \"roomid\": 1," +
+                "  \"firstname\": \"Phone\"," +
+                "  \"lastname\": \"Type\"," +
+                "  \"depositpaid\": false," +
+                "  \"bookingdates\": {" +
+                "    \"checkin\": \"2025-11-01\"," +
+                "    \"checkout\": \"2025-11-05\"" +
+                "  }," +
+                "  \"email\": \"phone.type@example.com\"," +
+                "  \"phone\": 1234567890 // Invalid: integer, expects string" +
+                "}";
+
+        return Stream.of(
+                Arguments.of(jsonWithInvalidDepositPaidType, "Depositpaid as String"),
+                Arguments.of(jsonWithIntegerPhone, "Phone as Integer")
+        );
+    }
+
+    @ParameterizedTest(name = "Booking with invalid data: {1}")
+    @MethodSource("invalidDataTypesProvider")
+    @DisplayName("Should return 400 for requests with invalid data types in fields")
+    public void testBookingFailsWithInvalidDataTypes(String requestBody, String testDescription) {
+        givenRequest()
+                .body(requestBody)
+                .when()
+                .post(BOOKING_ENDPOINT)
+                .then()
+                .statusCode(500)
+                .body("", is(empty()));
     }
 }
