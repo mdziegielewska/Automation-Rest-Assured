@@ -61,8 +61,34 @@ Once prerequisites are met, navigate to the project root (`Restful-Booker-Platfo
 
 ## Test Coverage
 
-_to be done_
-
+* **Authorization**
+    * [x] Token Creation
+    * [x] Token Validation
+* **Booking**
+    * [x] Getting Booking
+    * [ ] Booking Creation
+    * [ ] Booking Update
+    * [ ] Booking Deletion
+* **Branding**
+    * [ ] Getting Branding
+    * [ ] Branding Update
+* **Message**
+    * [ ] Getting Messages
+    * [ ] Getting Message
+    * [ ] Unread Count
+    * [ ] Message Creation
+    * [ ] Marking as Read
+    * [ ] Message Deletion
+* **Room**
+    * [ ] Getting Rooms
+    * [ ] Getting Room
+    * [ ] Room Creation
+    * [ ] Room Update
+    * [ ] Room Deletion
+* **Report**
+    * [ ] Getting Specific Room Report
+    * [ ] Getting Rooms Report
+   
 ## Future Enhancements
 
 * Expand Postman collections with negative test scenarios.

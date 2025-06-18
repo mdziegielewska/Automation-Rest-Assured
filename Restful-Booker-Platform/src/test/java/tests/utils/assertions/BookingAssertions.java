@@ -1,7 +1,7 @@
 package tests.utils.assertions;
 
-import models.BookingDates;
-import models.BookingResponse;
+import models.common.BookingDates;
+import models.response.BookingResponse;
 import tests.utils.DateUtils;
 
 import java.util.List;

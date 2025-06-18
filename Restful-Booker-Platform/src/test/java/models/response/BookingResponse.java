@@ -1,4 +1,6 @@
-package models;
+package models.response;
+
+import models.common.BookingDates;
 
 import java.util.Objects;
 

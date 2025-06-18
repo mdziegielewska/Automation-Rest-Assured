@@ -5,14 +5,14 @@ import io.restassured.config.ObjectMapperConfig;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.specification.RequestSpecification;
-import models.LoginRequest;
+import models.request.LoginRequest;
 
 import static constants.ApiConstants.*;
 import static constants.ApiConstants.TOKEN_JSON_PATH;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static tests.utils.TestUtils.loadLoginRequest;
+import static tests.utils.TestUtils.loadRequest;
 
 
 /**
@@ -45,7 +45,7 @@ public class BaseTest {
      * @throws RuntimeException if login fails or token is not retrieved (e.g., due to API error).
      */
     public static String getAuthToken() {
-        LoginRequest loginRequest = loadLoginRequest(CORRECT_LOGIN_PATH);
+        LoginRequest loginRequest = loadRequest(CORRECT_LOGIN_PATH, LoginRequest.class);
 
         String token = givenRequest()
                 .body(loginRequest)
@@ -58,7 +58,6 @@ public class BaseTest {
                 .path(TOKEN_JSON_PATH);
 
         assertNotNull(token, "Failed to obtain a valid token during login.");
-        System.out.println("Successfully obtained authentication token for tests.");
         return token;
     }
 }

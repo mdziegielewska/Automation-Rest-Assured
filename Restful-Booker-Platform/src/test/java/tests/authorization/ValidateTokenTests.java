@@ -52,7 +52,7 @@ public class ValidateTokenTests extends BaseTest {
 
     @Test
     @DisplayName("Should fail validation for an empty token string")
-    public void testEmptyTokenValidation() {
+    public void testEmptyTokenStringValidation() {
         String emptyToken = "";
         String requestBody = String.format("{ \"%s\": \"%s\" }", TOKEN_JSON_PATH, emptyToken);
 
@@ -81,7 +81,7 @@ public class ValidateTokenTests extends BaseTest {
 
     @Test
     @DisplayName("Should handle malformed token format")
-    public void testMalformedTokenFormat() {
+    public void testMalformedJsonRequestBody() {
         String malformedTokenBody = "{ \"token\": thisisnotastring }";
 
         givenRequest()

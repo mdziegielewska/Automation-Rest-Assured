@@ -1,7 +1,7 @@
 package tests.authorization;
 
 import io.restassured.response.ValidatableResponse;
-import models.LoginRequest;
+import models.request.LoginRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.RepeatedTest;
@@ -18,7 +18,7 @@ import static constants.ApiConstants.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static tests.utils.TestUtils.loadLoginRequest;
+import static tests.utils.TestUtils.loadRequest;
 import static tests.utils.assertions.LoginAssertions.assertFailedLoginResponse;
 import static tests.utils.assertions.LoginAssertions.assertSuccessfulLoginResponse;
 
@@ -41,7 +41,7 @@ public class CreateTokenTests extends BaseTest {
     @Test
     @DisplayName("Should create token successfully with valid credentials")
     public void testSuccessfulLogin() {
-        LoginRequest loginRequest = loadLoginRequest(CORRECT_LOGIN_PATH);
+        LoginRequest loginRequest = loadRequest(CORRECT_LOGIN_PATH, LoginRequest.class);
 
         ValidatableResponse response = givenRequest()
                 .body(loginRequest)
@@ -55,7 +55,7 @@ public class CreateTokenTests extends BaseTest {
     @Test
     @DisplayName("Should fail login with incorrect credentials")
     public void testFailedLoginWithIncorrectCredentials() {
-        LoginRequest loginRequest = loadLoginRequest(INCORRECT_LOGIN_PATH);
+        LoginRequest loginRequest = loadRequest(INCORRECT_LOGIN_PATH, LoginRequest.class);
 
         ValidatableResponse response = givenRequest()
                 .body(loginRequest)
@@ -111,7 +111,7 @@ public class CreateTokenTests extends BaseTest {
     @RepeatedTest(5)
     @DisplayName("Each repeated login request should create a new, unique token")
     public void testRepeatedLoginTokenUniqueness() {
-        LoginRequest loginRequest = loadLoginRequest(CORRECT_LOGIN_PATH);
+        LoginRequest loginRequest = loadRequest(CORRECT_LOGIN_PATH, LoginRequest.class);
 
         String token = givenRequest()
                 .body(loginRequest)

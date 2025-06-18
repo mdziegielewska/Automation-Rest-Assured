@@ -1,4 +1,4 @@
-package models;
+package models.common;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.Objects;

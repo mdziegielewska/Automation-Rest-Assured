@@ -1,6 +1,6 @@
 package tests.booking;
 
-import models.BookingResponse;
+import models.response.BookingResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,9 +46,7 @@ public class GetBookingsTests {
     @ParameterizedTest(name = "Room ID: {0}")
     @MethodSource("roomIdsProvider")
     @DisplayName("Should get a list of bookings for a specific room ID and verify content of each")
-    public void getBookingByExistingRoomIdTests(int roomIdToQuery) {
-        System.out.printf("Running test for roomId: %d", roomIdToQuery);
-
+    public void testGetBookingsByExistingRoomId(int roomIdToQuery) {
         List<BookingResponse> bookings = givenRequest()
                 .header("Cookie", String.format("token=%s", authToken))
                 .queryParam("roomid", roomIdToQuery)
@@ -68,7 +66,7 @@ public class GetBookingsTests {
 
     @Test
     @DisplayName("Should get an empty list of bookings for a non-existent room ID")
-    public void getBookingByNonExistentRoomIdTests() {
+    public void testGetBookingsByNonExistentRoomId() {
         int nonExistentRoomId = 99999;
 
         List<BookingResponse> bookings = givenRequest()
@@ -86,7 +84,7 @@ public class GetBookingsTests {
 
     @Test
     @DisplayName("Should return 400 when room ID is not provided")
-    public void getBookingWithoutRoomIdTests() {
+    public void testGetBookingsWithoutRoomId() {
         givenRequest()
                 .header("Cookie", String.format("token=%s", authToken))
                 .when()
@@ -98,9 +96,21 @@ public class GetBookingsTests {
 
     @Test
     @DisplayName("Should fail when roomid is not int")
-    public void getBookingWithCharRoomIdTests() {
+    public void testGetBookingsWithNonIntegerRoomId() {
         givenRequest()
                 .header("Cookie", String.format("token=%s", authToken))
+                .queryParam("roomid", "A")
+                .when()
+                .get(BOOKING_ENDPOINT)
+                .then()
+                .statusCode(500);
+    }
+
+    @Test
+    @DisplayName("Should fail when no authentication")
+    public void testGetBookingsAuthenticationFailure()  {
+        givenRequest()
+                .header("Cookie", "token=test123")
                 .queryParam("roomid", "A")
                 .when()
                 .get(BOOKING_ENDPOINT)

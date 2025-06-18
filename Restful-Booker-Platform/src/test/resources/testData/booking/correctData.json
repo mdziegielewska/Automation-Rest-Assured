@@ -1,0 +1,12 @@
+{
+  "roomid": 1,
+  "firstname": "Test",
+  "lastname": "User",
+  "depositpaid": false,
+  "bookingdates": {
+    "checkin": "2025-07-23",
+    "checkout": "2025-07-24"
+  },
+  "email": "test.user@gmail.pl",
+  "phone": "12345678900"
+}
