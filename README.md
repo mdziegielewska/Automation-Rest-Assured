@@ -92,5 +92,5 @@ Once prerequisites are met, navigate to the project root (`Restful-Booker-Platfo
 ## Future Enhancements
 
 * Expand Postman collections with negative test scenarios.
-* Implement additional REST-Assured test cases for broader API coverage.
+* Implement additional REST-Assured test cases for broader API coverage, especially security checks.
 * Add reporting capabilities (e.g., Allure Report).
