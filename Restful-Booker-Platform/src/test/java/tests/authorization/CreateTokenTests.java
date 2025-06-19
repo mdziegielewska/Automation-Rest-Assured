@@ -19,8 +19,9 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static tests.utils.TestUtils.loadRequest;
-import static tests.utils.assertions.LoginAssertions.assertFailedLoginResponse;
-import static tests.utils.assertions.LoginAssertions.assertSuccessfulLoginResponse;
+import static tests.utils.assertions.CommonAssertions.assertFailedResponse;
+import static tests.utils.assertions.CommonAssertions.assertInternalServerError;
+import static tests.utils.assertions.AuthorizationAssertions.assertSuccessfulLoginResponse;
 
 
 public class CreateTokenTests extends BaseTest {
@@ -63,7 +64,7 @@ public class CreateTokenTests extends BaseTest {
                 .post(AUTH_LOGIN_ENDPOINT)
                 .then();
 
-        assertFailedLoginResponse(response, INVALID_CREDENTIALS_ERROR_MESSAGE);
+        assertFailedResponse(response, 401, INVALID_CREDENTIALS_ERROR_MESSAGE);
     }
 
     /**
@@ -83,7 +84,7 @@ public class CreateTokenTests extends BaseTest {
 
     @ParameterizedTest(name = "{1}")
     @MethodSource("invalidLoginRequests")
-    @DisplayName("Should fail login with various invalid credentials scenarios")
+    @DisplayName("Should return 401 for various invalid credentials scenarios")
     public void testInvalidCredentials(LoginRequest loginRequest, String displayName) {
         ValidatableResponse response = givenRequest()
                 .body(loginRequest)
@@ -91,20 +92,21 @@ public class CreateTokenTests extends BaseTest {
                 .post(AUTH_LOGIN_ENDPOINT)
                 .then();
 
-        assertFailedLoginResponse(response, INVALID_CREDENTIALS_ERROR_MESSAGE);
+        assertFailedResponse(response, 401, INVALID_CREDENTIALS_ERROR_MESSAGE);
     }
 
     @Test
     @DisplayName("Should return 500 for malformed JSON request body")
-    public void testMalformedJson() {
-        String malformedJson = "{ \"username\": \"admin\", \"password\": \"pass\""; // Missing closing brace
+    public void testLoginWithMalformedJson() {
+        String malformedJson = "{ \"username\": \"admin\", \"password\": \"pass\"";
 
-        givenRequest()
+        ValidatableResponse response = givenRequest()
                 .body(malformedJson)
                 .when()
                 .post(AUTH_LOGIN_ENDPOINT)
-                .then()
-                .statusCode(500);
+                .then();
+
+        assertInternalServerError(response, UNEXPECTED_ERROR_MESSAGE);
     }
 
     @RepeatedTest(5)

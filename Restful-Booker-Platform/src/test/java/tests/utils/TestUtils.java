@@ -2,16 +2,21 @@ package tests.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import models.request.BookingRequest;
+import models.response.BookingResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
+import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import static constants.ApiConstants.BOOKING_ENDPOINT;
+import static tests.base.BaseTest.givenRequest;
 import static tests.utils.DateUtils.generateRandomBookingDates;
+
 
 /**
  * Utility class for common test operations, such as reading data from resource files
@@ -51,9 +56,8 @@ public class TestUtils {
      * @param filePath The path to the JSON file relative to the classpath (e.g., "testData/auth/login.json").
      * @param type The Class object representing the target type {@code <T>} for deserialization.
      * @return An object of type T, populated with data from the JSON file.
-     * @throws RuntimeException if the file cannot be found, read, or deserialized.
      */
-    public static <T> T loadRequestFromFile(String filePath, Class<T> type) throws IOException {
+    public static <T> T loadRequestFromFile(String filePath, Class<T> type) {
         try (InputStream inputStream = TestUtils.class.getClassLoader().getResourceAsStream(filePath)) {
             if (inputStream == null) {
                 throw new IOException(String.format("Resource file not found on classpath: %s", filePath));
@@ -84,8 +88,6 @@ public class TestUtils {
 
     /**
      * Builds a complete {@link BookingRequest} object for testing purposes.
-     * It loads a base request from a JSON file and then overrides dynamic fields
-     * like room ID and booking dates.
      * @param baseJsonPath The path to the base JSON file (e.g., ApiConstants.CORRECT_BOOKING_PATH).
      * @param roomId The room ID to set for the booking (e.g., "1").
      * @return A {@link BookingRequest} object ready for use in API calls.
@@ -93,7 +95,6 @@ public class TestUtils {
     public static BookingRequest buildBookingRequest(String baseJsonPath, String roomId) {
         BookingRequest bookingRequest = loadRequest(baseJsonPath, BookingRequest.class);
 
-        // Override dynamic parts: set predefined room ID and dynamically generated booking dates
         bookingRequest.setRoomid(roomId);
         bookingRequest.setBookingdates(generateRandomBookingDates());
         return bookingRequest;
@@ -101,7 +102,6 @@ public class TestUtils {
 
     /**
      * Generates a random positive long number with a specified number of digits.
-     *
      * @param length The desired number of digits for the long. Must be between 1 and 18 (inclusive, for a long).
      * @return A positive long number with the specified number of digits.
      * @throws IllegalArgumentException if length is not within the valid range for a long (1 to 18).
@@ -125,10 +125,49 @@ public class TestUtils {
 
     /**
      * Generates a 10-character string containing only digits (0-9).
-     * This is a convenience method calling generateNumericString(10).
      * @return A 10-character string composed of random digits.
      */
     public static String generate10DigitNumericString() {
         return String.valueOf(generateLongWithDigits(10));
+    }
+
+    /**
+     * Retrieves the first {@link BookingResponse} object from the list returned by the GET /booking endpoint.
+     * @param authToken The authentication token to include in the request's Cookie header.
+     * @param roomId The room ID to query for, filtering the list of bookings returned.
+     * @return The first {@link BookingResponse} object found for the specified room ID, or {@code null}
+     * if no bookings match the criteria or the response is empty/malformed.
+     */
+    public static BookingResponse getFirstBookingId(String authToken, Integer roomId) {
+        List<BookingResponse> bookings = givenRequest()
+                .header("Cookie", String.format("token=%s", authToken))
+                .queryParam("roomid", roomId)
+                .when()
+                .get(BOOKING_ENDPOINT)
+                .then()
+                .statusCode(200)
+                .extract().jsonPath().getList("bookings", BookingResponse.class);
+
+        if (bookings != null && !bookings.isEmpty()) {
+            return bookings.getFirst();
+        }
+        return null;
+    }
+
+    /**
+     * Creates a shallow copy of the given BookingResponse object.
+     * @param original the original BookingResponse to clone
+     * @return a new BookingResponse object with the same field values
+     */
+    public static BookingResponse cloneBooking(BookingResponse original) {
+        BookingResponse copy = new BookingResponse();
+        copy.setBookingid(original.getBookingid());
+        copy.setRoomid(original.getRoomid());
+        copy.setFirstname(original.getFirstname());
+        copy.setLastname(original.getLastname());
+        copy.setDepositpaid(original.getDepositpaid());
+        copy.setBookingdates(original.getBookingdates());
+
+        return copy;
     }
 }

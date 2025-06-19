@@ -1,5 +1,6 @@
 package tests.booking;
 
+import io.restassured.response.ValidatableResponse;
 import models.common.BookingDates;
 import models.request.BookingRequest;
 import org.junit.jupiter.api.DisplayName;
@@ -7,17 +8,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import tests.utils.TestUtils;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static constants.ApiConstants.*;
-import static org.hamcrest.Matchers.*;
 import static tests.base.BaseTest.givenRequest;
 import static tests.utils.TestUtils.*;
-import static tests.utils.assertions.BookingAssertions.assertErrorListContains;
+import static tests.utils.assertions.CommonAssertions.assertListContains;
+import static tests.utils.assertions.CommonAssertions.assertInternalServerError;
+import static tests.utils.assertions.CommonAssertions.assertSuccessfulResponse;
 
 
 public class CreateBookingTests {
@@ -25,8 +26,6 @@ public class CreateBookingTests {
     // --- Test Cases ---
     /**
      * Provides a stream of Arguments, each containing a fully built {@link BookingRequest} object.
-     * This leverages {@link TestUtils#buildBookingRequest(String, String)} to create requests
-     * with predefined room IDs and dynamically generated booking dates.
      * @return A Stream of Arguments, where each argument is a {@link BookingRequest} object.
      */
     private static Stream<Arguments> bookingDataProvider() {
@@ -41,13 +40,13 @@ public class CreateBookingTests {
     @MethodSource("bookingDataProvider")
     @DisplayName("Should create a booking correctly")
     public void testSuccessfulBookingCreation(BookingRequest bookingRequest) {
-        givenRequest()
+        ValidatableResponse response = givenRequest()
                 .body(bookingRequest)
                 .when()
                 .post(BOOKING_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body("", is(empty()));
+                .then();
+
+        assertSuccessfulResponse(response);
     }
 
     @Test
@@ -55,31 +54,31 @@ public class CreateBookingTests {
     public void testBookingSameRoomSameDates() {
          BookingRequest bookingRequest = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
 
-        givenRequest()
+        ValidatableResponse response = givenRequest()
                 .body(bookingRequest)
                 .when()
                 .post(BOOKING_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body("", is(empty()));
+                .then();
+
+        assertSuccessfulResponse(response);
         
         bookingRequest.setFirstname("New");
         bookingRequest.setLastname("User");
         bookingRequest.setEmail("new.user@gmail.com");
         bookingRequest.setPhone("09876543210");
 
-        givenRequest()
+        ValidatableResponse anotherResponse = givenRequest()
                 .body(bookingRequest)
                 .when()
                 .post(BOOKING_ENDPOINT)
-                .then()
-                .statusCode(500)
-                .body("", is(empty()));
+                .then();
+
+        assertInternalServerError(anotherResponse);
     }
 
     @Test
     @DisplayName("Should return 500 for malformed JSON request body")
-    public void testMalformedJsonRequestBody() {
+    public void testCreationWithMalformedJson() {
         String malformedJson = "{" +
                 "  \"roomid\": 1," +
                 "  \"firstname\": \"Test\"" + // Missing comma
@@ -93,13 +92,13 @@ public class CreateBookingTests {
                 "  \"phone\": \"12345678900\"" +
                 "}";
 
-        givenRequest()
+        ValidatableResponse response = givenRequest()
                 .body(malformedJson)
                 .when()
                 .post(BOOKING_ENDPOINT)
-                .then()
-                .statusCode(500)
-                .body("", is(empty()));
+                .then();
+
+        assertInternalServerError(response);
     }
 
     /**
@@ -142,22 +141,22 @@ public class CreateBookingTests {
 
     @ParameterizedTest(name = "{1}")
     @MethodSource("invalidFieldsProvider")
-    @DisplayName("Should fail when request has invalid fields")
-    public void testBookingFailsWithInvalidFields(BookingRequest bookingRequest, String displayName, String expectedError) {
+    @DisplayName("Should return errors for request with invalid fields")
+    public void testBookingWithInvalidFields(BookingRequest bookingRequest, String displayName, String expectedError) {
         List<String> errors = givenRequest()
                 .body(bookingRequest)
                 .when()
                 .post(BOOKING_ENDPOINT)
                 .then()
                 .statusCode(400)
-                .extract().jsonPath().getList(ERRORS_JSON_PATH, String.class); // Extract the list of errors
+                .extract().jsonPath().getList(ERRORS_JSON_PATH, String.class);
 
-        assertErrorListContains(errors, expectedError);
+        assertListContains(errors, expectedError);
     }
 
     @Test
     @DisplayName("Should handle booking non-existent room id")
-    public void testBookingFailsForNonExistentRoomId() {
+    public void testBookingForNonExistentRoomId() {
         String nonExistentRoomId = generate10DigitNumericString();
         BookingRequest bookingForNonExistentRoom = buildBookingRequest(CORRECT_BOOKING_PATH, nonExistentRoomId);
 
@@ -168,9 +167,9 @@ public class CreateBookingTests {
                 .then()
                 .statusCode(400)
                 .extract()
-                .jsonPath().getList(ERRORS_JSON_PATH, String.class); // Extract the list of errors
+                .jsonPath().getList(ERRORS_JSON_PATH, String.class);
 
-        assertErrorListContains(errors, BOOKING_CREATION_GENERIC_FAILURE_ERROR_MESSAGE);
+        assertListContains(errors, BOOKING_CREATION_GENERIC_FAILURE_ERROR_MESSAGE);
     }
 
     /**
@@ -178,16 +177,16 @@ public class CreateBookingTests {
      * Each argument includes a Booking Request object, a display name and a status code.
      */
     private static Stream<Arguments> boundaryDatesProvider() {
-        // Scenario 1: Checkin and Checkout are the same day (assuming this is valid)
+        // Scenario 1: Checkin and Checkout are the same day
         LocalDate today = LocalDate.now();
         BookingRequest sameDayBooking = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
         sameDayBooking.setBookingdates(new BookingDates(today.toString(), today.toString()));
 
-        // Scenario 2: Checkout date is before Checkin date (should fail)
+        // Scenario 2: Checkout date is before Checkin date
         BookingRequest invalidDateRangeBooking = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
         invalidDateRangeBooking.setBookingdates(new BookingDates(today.toString(), today.minusDays(10).toString()));
 
-        // Scenario 3: Booking far in the future (assuming valid)
+        // Scenario 3: Booking far in the future
         LocalDate futureCheckin = LocalDate.now().plusYears(generateLongWithDigits(2));
         LocalDate futureCheckout = futureCheckin.plusDays(2);
         BookingRequest futureBooking = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
@@ -203,19 +202,24 @@ public class CreateBookingTests {
     @ParameterizedTest(name = "{1}")
     @MethodSource("boundaryDatesProvider")
     @DisplayName("Should handle boundary dates")
-    public void testBookingHandlesBoundaryDates(BookingRequest boundaryDate,  String displayName, Integer statusCode) {
-        givenRequest()
+    public void testBookingHandlesBoundaryDates(BookingRequest boundaryDate, String displayName, Integer expectedStatusCode) {
+        ValidatableResponse response = givenRequest()
                 .body(boundaryDate)
                 .when()
                 .post(BOOKING_ENDPOINT)
-                .then()
-                .statusCode(statusCode);
+                .then();
+
+        if (expectedStatusCode == 500) {
+            assertInternalServerError(response);
+        } else if (expectedStatusCode == 200) {
+            assertSuccessfulResponse(response);
+        }
     }
 
     @Test
-    @DisplayName("Should fail when request has missing fields")
-    public void testBookingFailsWithMissingMandatoryFields()  {
-        String malformedJson = "{" +
+    @DisplayName("Should return 500 when request has missing fields")
+    public void testBookingWithMissingMandatoryFields()  {
+        String missingFieldJson = "{" +
                 "  \"roomid\": 1," +
                 "  \"firstname\": \"Test\"," +
                 "  \"lastname\": \"User\"," +
@@ -225,12 +229,12 @@ public class CreateBookingTests {
                 "  }," +
                 "}";
 
-        givenRequest()
-                .body(malformedJson)
+        ValidatableResponse response = givenRequest()
+                .body(missingFieldJson)
                 .when()
                 .post(BOOKING_ENDPOINT)
-                .then()
-                .statusCode(500)
-                .body("", is(empty()));
+                .then();
+
+        assertInternalServerError(response);
     }
 }

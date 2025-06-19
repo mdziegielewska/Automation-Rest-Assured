@@ -1,5 +1,6 @@
 package tests.booking;
 
+import io.restassured.response.ValidatableResponse;
 import models.response.BookingResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -12,10 +13,11 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static constants.ApiConstants.*;
-import static org.hamcrest.Matchers.*;
 import static tests.base.BaseTest.getAuthToken;
 import static tests.base.BaseTest.givenRequest;
 import static tests.utils.assertions.BookingAssertions.*;
+import static tests.utils.assertions.CommonAssertions.assertFailedResponse;
+import static tests.utils.assertions.CommonAssertions.assertInternalServerError;
 
 
 public class GetBookingsTests {
@@ -27,7 +29,6 @@ public class GetBookingsTests {
     @BeforeAll
     public static void setupToken() {
         authToken = getAuthToken();
-        System.out.printf("Obtained valid token for validation tests: %s", authToken);
     }
 
     /**
@@ -85,36 +86,37 @@ public class GetBookingsTests {
     @Test
     @DisplayName("Should return 400 when room ID is not provided")
     public void testGetBookingsWithoutRoomId() {
-        givenRequest()
+        ValidatableResponse response = givenRequest()
                 .header("Cookie", String.format("token=%s", authToken))
                 .when()
                 .get(BOOKING_ENDPOINT)
-                .then()
-                .statusCode(400)
-                .body(ERROR_JSON_PATH, is(ROOM_ID_REQUIRED_ERROR_MESSAGE));
+                .then();
+
+        assertFailedResponse(response, 400, ROOM_ID_REQUIRED_ERROR_MESSAGE);
     }
 
     @Test
-    @DisplayName("Should fail when roomid is not int")
+    @DisplayName("Should return 500 when roomid is not integer")
     public void testGetBookingsWithNonIntegerRoomId() {
-        givenRequest()
+        ValidatableResponse response = givenRequest()
                 .header("Cookie", String.format("token=%s", authToken))
                 .queryParam("roomid", "A")
                 .when()
                 .get(BOOKING_ENDPOINT)
-                .then()
-                .statusCode(500);
+                .then();
+
+        assertInternalServerError(response);
     }
 
     @Test
-    @DisplayName("Should fail when no authentication")
-    public void testGetBookingsAuthenticationFailure()  {
-        givenRequest()
-                .header("Cookie", "token=test123")
-                .queryParam("roomid", "A")
+    @DisplayName("Should return 401 without authentication")
+    public void testGetBookingsWithNoAuthentication()  {
+        ValidatableResponse response = givenRequest()
+                .queryParam("roomid", "1")
                 .when()
                 .get(BOOKING_ENDPOINT)
-                .then()
-                .statusCode(500);
+                .then();
+
+        assertFailedResponse(response, 401, AUTHENTICATION_REQUIRED_ERROR_MESSAGE);
     }
 }

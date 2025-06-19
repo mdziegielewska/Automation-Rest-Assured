@@ -1,12 +1,13 @@
 package tests.authorization;
 
+import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import tests.base.BaseTest;
 
 import static constants.ApiConstants.*;
-import static org.hamcrest.Matchers.*;
+import static tests.utils.assertions.CommonAssertions.*;
 
 
 public class ValidateTokenTests extends BaseTest {
@@ -18,7 +19,6 @@ public class ValidateTokenTests extends BaseTest {
     @BeforeAll
     public static void setupToken() {
         validAuthToken = getAuthToken();
-        System.out.printf("Obtained valid token for validation tests: %s%n", validAuthToken);
     }
 
     @Test
@@ -26,69 +26,70 @@ public class ValidateTokenTests extends BaseTest {
     public void testValidTokenValidation() {
         String requestBody = String.format("{ \"%s\": \"%s\" }", TOKEN_JSON_PATH, validAuthToken);
 
-        givenRequest()
+        ValidatableResponse response = givenRequest()
                 .body(requestBody)
                 .when()
                 .post(AUTH_VALIDATE_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body(VALID_JSON_PATH, is(true));
+                .then();
+
+        assertJsonBooleanValue(response, VALID_JSON_PATH, true);
     }
 
     @Test
-    @DisplayName("Should fail validation for an invalid token")
+    @DisplayName("Should fail validation with 401 for an invalid token")
     public void testInvalidTokenValidation() {
         String invalidToken = "thisisajustsomeinvalidtokenstringforexample";
         String requestBody = String.format("{ \"%s\": \"%s\" }", TOKEN_JSON_PATH, invalidToken);
 
-        givenRequest()
+        ValidatableResponse response = givenRequest()
                 .body(requestBody)
                 .when()
                 .post(AUTH_VALIDATE_ENDPOINT)
-                .then()
-                .statusCode(403)
-                .body(ERROR_JSON_PATH, equalTo(INVALID_TOKEN_ERROR_MESSAGE));
+                .then();
+
+        assertFailedResponse(response, 403, INVALID_TOKEN_ERROR_MESSAGE);
     }
 
     @Test
-    @DisplayName("Should fail validation for an empty token string")
+    @DisplayName("Should fail validation with 401 for an empty token string")
     public void testEmptyTokenStringValidation() {
         String emptyToken = "";
         String requestBody = String.format("{ \"%s\": \"%s\" }", TOKEN_JSON_PATH, emptyToken);
 
-        givenRequest()
+        ValidatableResponse response = givenRequest()
                 .body(requestBody)
                 .when()
                 .post(AUTH_VALIDATE_ENDPOINT)
-                .then()
-                .statusCode(401)
-                .body(ERROR_JSON_PATH, equalTo(NO_TOKEN_PROVIDED_ERROR_MESSAGE));
+                .then();
+
+        assertFailedResponse(response, 401, NO_TOKEN_PROVIDED_ERROR_MESSAGE);
     }
 
     @Test
-    @DisplayName("Should fail validation for a null token value")
+    @DisplayName("Should fail validation with 401 for a null token value")
     public void testNullTokenValueValidation() {
         String requestBody = String.format("{ \"%s\": %s }", TOKEN_JSON_PATH, "null");
 
-        givenRequest()
+        ValidatableResponse response = givenRequest()
                 .body(requestBody)
                 .when()
                 .post(AUTH_VALIDATE_ENDPOINT)
-                .then()
-                .statusCode(401)
-                .body(ERROR_JSON_PATH, equalTo(NO_TOKEN_PROVIDED_ERROR_MESSAGE));
+                .then();
+
+        assertFailedResponse(response, 401, NO_TOKEN_PROVIDED_ERROR_MESSAGE);
     }
 
     @Test
-    @DisplayName("Should handle malformed token format")
-    public void testMalformedJsonRequestBody() {
+    @DisplayName("Should return 500 for malformed token format")
+    public void testValidationWithMalformedJson() {
         String malformedTokenBody = "{ \"token\": thisisnotastring }";
 
-        givenRequest()
+        ValidatableResponse response = givenRequest()
                 .body(malformedTokenBody)
                 .when()
                 .post(AUTH_VALIDATE_ENDPOINT)
-                .then()
-                .statusCode(500);
+                .then();
+
+        assertInternalServerError(response, UNEXPECTED_ERROR_MESSAGE);
     }
 }

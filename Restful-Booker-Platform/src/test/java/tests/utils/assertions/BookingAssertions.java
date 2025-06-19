@@ -6,6 +6,7 @@ import tests.utils.DateUtils;
 
 import java.util.List;
 
+import static constants.ApiConstants.SUCCESS_JSON_PATH;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -69,16 +70,5 @@ public final class BookingAssertions {
         assertThat("Bookings list should not be null", bookings, is(notNullValue()));
         assertThat("Bookings list should be empty", bookings, is(empty()));
         assertThat("Bookings list size should be 0", bookings.size(), equalTo(0));
-    }
-
-    /**
-     * Asserts that a list of error messages is not null, is a list, and contains a specific expected error.
-     * @param errors The list of error messages.
-     * @param expectedError The specific error message expected to be in the list.
-     */
-    public static void assertErrorListContains(List<String> errors, String expectedError) {
-        assertThat("Errors list should not be null", errors, is(notNullValue()));
-        assertThat("Errors object should be a List", errors, isA(List.class));
-        assertThat("Errors list should contain the expected error message", errors, hasItem(expectedError));
     }
 }

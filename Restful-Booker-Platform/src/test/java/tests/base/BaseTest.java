@@ -4,6 +4,7 @@ import io.restassured.RestAssured;
 import io.restassured.config.ObjectMapperConfig;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
+import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import models.request.LoginRequest;
 
@@ -13,6 +14,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static tests.utils.TestUtils.loadRequest;
+import static tests.utils.assertions.AuthorizationAssertions.assertSuccessfulLoginResponse;
 
 
 /**
@@ -47,14 +49,15 @@ public class BaseTest {
     public static String getAuthToken() {
         LoginRequest loginRequest = loadRequest(CORRECT_LOGIN_PATH, LoginRequest.class);
 
-        String token = givenRequest()
+        ValidatableResponse response = givenRequest()
                 .body(loginRequest)
                 .when()
                 .post(AUTH_LOGIN_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body(TOKEN_JSON_PATH, notNullValue())
-                .extract()
+                .then();
+
+        assertSuccessfulLoginResponse(response);
+
+        String token = response.extract()
                 .path(TOKEN_JSON_PATH);
 
         assertNotNull(token, "Failed to obtain a valid token during login.");

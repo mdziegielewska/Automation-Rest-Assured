@@ -8,9 +8,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.Random;
 import java.util.regex.Pattern;
 
+
 /**
  * Utility class for common date-related validation operations.
- * This centralizes date format and validity checks.
  */
 public final class DateUtils {
 
@@ -25,7 +25,6 @@ public final class DateUtils {
     /**
      * Validates a date string against the YYYY-MM-DD regex pattern and then attempts to parse it
      * to ensure it represents a valid calendar date.
-     *
      * @param dateString The date string to validate (e.g., "2024-01-01").
      * @param fieldName The name of the date field (e.g., "Checkin date", "Checkout date") for error messages.
      * @param contextInfo A string providing context about the object being validated (e.g., "for booking: XYZ").
@@ -35,7 +34,7 @@ public final class DateUtils {
         Assertions.assertTrue(DATE_REGEX_PATTERN.matcher(dateString).matches(),
                 String.format("%s '%s' does not match YYYY-MM-DD regex pattern %s", fieldName, dateString, contextInfo));
 
-        // 2. Check actual date validity (e.g., prevents 2024-02-30)
+        // 2. Check actual date validity
         try {
             LocalDate.parse(dateString);
         } catch (DateTimeParseException e) {
@@ -55,7 +54,6 @@ public final class DateUtils {
         LocalDate today = LocalDate.now();
         LocalDate farFuture = today.plusYears(3);
 
-        // Calculate the total number of days from today to farFuture
         long daysInRange = ChronoUnit.DAYS.between(today, farFuture);
 
         long randomDaysToAdd = RANDOM.nextLong(daysInRange + 1);
@@ -63,9 +61,6 @@ public final class DateUtils {
 
         int nights = RANDOM.nextInt(5) + 3;
         LocalDate checkout = checkin.plusDays(nights);
-
-        System.out.printf("Generated Booking Dates: Checkin: %s, Checkout: %s (Duration: %d nights)%n",
-                checkin, checkout, nights);
 
         return new BookingDates(checkin.toString(), checkout.toString());
     }
