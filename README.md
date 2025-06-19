@@ -66,7 +66,7 @@ Once prerequisites are met, navigate to the project root (`Restful-Booker-Platfo
     * [x] Token Validation
 * **Booking**
     * [x] Getting Booking
-    * [ ] Booking Creation
+    * [x] Booking Creation
     * [ ] Booking Update
     * [ ] Booking Deletion
 * **Branding**

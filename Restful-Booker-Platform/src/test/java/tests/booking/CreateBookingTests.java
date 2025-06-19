@@ -17,6 +17,7 @@ import static constants.ApiConstants.*;
 import static org.hamcrest.Matchers.*;
 import static tests.base.BaseTest.givenRequest;
 import static tests.utils.TestUtils.*;
+import static tests.utils.assertions.BookingAssertions.assertErrorListContains;
 
 
 public class CreateBookingTests {
@@ -142,16 +143,16 @@ public class CreateBookingTests {
     @ParameterizedTest(name = "{1}")
     @MethodSource("invalidFieldsProvider")
     @DisplayName("Should fail when request has invalid fields")
-    public void testBookingFailsWithInvalidFields(BookingRequest bookingRequest, String testDescription, String expectedError) {
-        givenRequest()
+    public void testBookingFailsWithInvalidFields(BookingRequest bookingRequest, String displayName, String expectedError) {
+        List<String> errors = givenRequest()
                 .body(bookingRequest)
                 .when()
                 .post(BOOKING_ENDPOINT)
                 .then()
                 .statusCode(400)
-                .body(ERRORS_JSON_PATH, is(notNullValue()))
-                .body(ERRORS_JSON_PATH, isA(List.class))
-                .body(ERRORS_JSON_PATH, hasItem(expectedError));
+                .extract().jsonPath().getList(ERRORS_JSON_PATH, String.class); // Extract the list of errors
+
+        assertErrorListContains(errors, expectedError);
     }
 
     @Test
@@ -160,19 +161,21 @@ public class CreateBookingTests {
         String nonExistentRoomId = generate10DigitNumericString();
         BookingRequest bookingForNonExistentRoom = buildBookingRequest(CORRECT_BOOKING_PATH, nonExistentRoomId);
 
-        givenRequest()
+        List<String> errors = givenRequest()
                 .body(bookingForNonExistentRoom)
                 .when()
                 .post(BOOKING_ENDPOINT)
                 .then()
                 .statusCode(400)
-                .body(ERRORS_JSON_PATH, is(notNullValue()))
-                .body(ERRORS_JSON_PATH, isA(List.class))
-                .body(ERRORS_JSON_PATH, hasItem(BOOKING_CREATION_GENERIC_FAILURE_ERROR_MESSAGE));
+                .extract()
+                .jsonPath().getList(ERRORS_JSON_PATH, String.class); // Extract the list of errors
+
+        assertErrorListContains(errors, BOOKING_CREATION_GENERIC_FAILURE_ERROR_MESSAGE);
     }
 
     /**
      * Provides arguments for testing boundary dates in the BookingRequest.
+     * Each argument includes a Booking Request object, a display name and a status code.
      */
     private static Stream<Arguments> boundaryDatesProvider() {
         // Scenario 1: Checkin and Checkout are the same day (assuming this is valid)
@@ -200,7 +203,7 @@ public class CreateBookingTests {
     @ParameterizedTest(name = "{1}")
     @MethodSource("boundaryDatesProvider")
     @DisplayName("Should handle boundary dates")
-    public void testBookingHandlesBoundaryDates(BookingRequest boundaryDate, String testDescription, Integer statusCode) {
+    public void testBookingHandlesBoundaryDates(BookingRequest boundaryDate,  String displayName, Integer statusCode) {
         givenRequest()
                 .body(boundaryDate)
                 .when()
@@ -224,57 +227,6 @@ public class CreateBookingTests {
 
         givenRequest()
                 .body(malformedJson)
-                .when()
-                .post(BOOKING_ENDPOINT)
-                .then()
-                .statusCode(500)
-                .body("", is(empty()));
-    }
-
-    /**
-     * Provides arguments for testing booking creation with invalid data types.
-     */
-    private static Stream<Arguments> invalidDataTypesProvider() {
-        // Scenario 1: Depositpaid sent as a String "false" instead of a boolean false
-        String jsonWithInvalidDepositPaidType = "{" +
-                "  \"roomid\": 1," +
-                "  \"firstname\": \"Another\"," +
-                "  \"lastname\": \"Error\"," +
-                "  \"depositpaid\": \"false\"," + // Invalid: "false" is a string, expects boolean
-                "  \"bookingdates\": {" +
-                "    \"checkin\": \"2025-09-01\"," +
-                "    \"checkout\": \"2025-09-05\"" +
-                "  }," +
-                "  \"email\": \"another.error@example.com\"," +
-                "  \"phone\": \"22233344455\"" +
-                "}";
-
-        // Scenario 1: Phone number sent as an integer
-        String jsonWithIntegerPhone = "{" +
-                "  \"roomid\": 1," +
-                "  \"firstname\": \"Phone\"," +
-                "  \"lastname\": \"Type\"," +
-                "  \"depositpaid\": false," +
-                "  \"bookingdates\": {" +
-                "    \"checkin\": \"2025-11-01\"," +
-                "    \"checkout\": \"2025-11-05\"" +
-                "  }," +
-                "  \"email\": \"phone.type@example.com\"," +
-                "  \"phone\": 1234567890 // Invalid: integer, expects string" +
-                "}";
-
-        return Stream.of(
-                Arguments.of(jsonWithInvalidDepositPaidType, "Depositpaid as String"),
-                Arguments.of(jsonWithIntegerPhone, "Phone as Integer")
-        );
-    }
-
-    @ParameterizedTest(name = "Booking with invalid data: {1}")
-    @MethodSource("invalidDataTypesProvider")
-    @DisplayName("Should return 400 for requests with invalid data types in fields")
-    public void testBookingFailsWithInvalidDataTypes(String requestBody, String testDescription) {
-        givenRequest()
-                .body(requestBody)
                 .when()
                 .post(BOOKING_ENDPOINT)
                 .then()

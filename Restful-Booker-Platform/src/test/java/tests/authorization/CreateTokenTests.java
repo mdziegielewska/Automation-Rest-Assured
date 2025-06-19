@@ -67,8 +67,7 @@ public class CreateTokenTests extends BaseTest {
     }
 
     /**
-     * Provides a stream of arguments for parameterized tests,
-     * covering various invalid login request scenarios.
+     * Provides a stream of arguments for parameterized tests, covering various invalid login request scenarios.
      * Each argument includes a LoginRequest object and a display name.
      */
     private static Stream<Arguments> invalidLoginRequests() {
