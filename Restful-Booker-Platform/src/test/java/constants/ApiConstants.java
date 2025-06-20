@@ -36,6 +36,7 @@ public final class ApiConstants {
     public static final String FIELD_MUST_NOT_BE_EMPTY_ERROR_MESSAGE =  "must not be empty";
     public static final String AUTHENTICATION_REQUIRED_ERROR_MESSAGE = "Authentication required";
     public static final String UNEXPECTED_ERROR_MESSAGE = "An unexpected error occurred";
+    public static final String BOOKING_DELETION_GENERIC_FAILURE_ERROR_MESSAGE = "Failed to delete booking";
 
     // --- Test Data Paths ---
     public static final String CORRECT_LOGIN_PATH = "testData/authorization/correctData.json";

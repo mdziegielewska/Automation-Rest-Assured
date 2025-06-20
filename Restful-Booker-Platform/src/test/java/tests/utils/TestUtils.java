@@ -135,7 +135,7 @@ public class TestUtils {
      * Retrieves the first {@link BookingResponse} object from the list returned by the GET /booking endpoint.
      * @param authToken The authentication token to include in the request's Cookie header.
      * @param roomId The room ID to query for, filtering the list of bookings returned.
-     * @return The first {@link BookingResponse} object found for the specified room ID, or {@code null}
+     * @return The first {@link BookingResponse} object found for the specified room ID
      * if no bookings match the criteria or the response is empty/malformed.
      */
     public static BookingResponse getFirstBookingId(String authToken, Integer roomId) {
@@ -150,7 +150,10 @@ public class TestUtils {
 
         if (bookings != null && !bookings.isEmpty()) {
             return bookings.getFirst();
+        } else if (roomId != 15) {
+             return getFirstBookingId(authToken, roomId+1);
         }
+
         return null;
     }
 

@@ -33,6 +33,8 @@ public class UpdateBookingTests {
 
     @BeforeEach
     public void setup(TestInfo testInfo) {
+        // to do: add booking creation in setup to make tests more independent
+
         retrievedBooking = getFirstBookingId(authToken, 1);
         assert retrievedBooking != null;
 
