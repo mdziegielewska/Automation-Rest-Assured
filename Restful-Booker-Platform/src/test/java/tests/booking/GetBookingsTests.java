@@ -29,7 +29,7 @@ public class GetBookingsTests {
 
     // --- Test Cases ---
     @BeforeAll
-    public static void setupToken() {
+    public static void setup() {
         authToken = getAuthToken();
 
         // to do: add booking creation in setup to make tests more independent

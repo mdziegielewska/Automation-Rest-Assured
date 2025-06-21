@@ -36,7 +36,7 @@ public class UpdateBookingTests {
         // to do: add booking creation in setup to make tests more independent
 
         retrievedBooking = getFirstBookingId(authToken, 1);
-        assert retrievedBooking != null;
+        assertNotNullOrBlank(retrievedBooking, "Booking Response");
 
         if (testInfo.getDisplayName().equals("testBookingUpdateSameData")) {
             return;

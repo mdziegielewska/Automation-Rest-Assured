@@ -32,6 +32,8 @@ public class GetBrandingTests {
                 .statusCode(200)
                 .extract()
                 .as(BrandingResponse.class);
+
+        assertNotNullOrBlank(branding, "Branding Response Object");
     }
 
     /**
