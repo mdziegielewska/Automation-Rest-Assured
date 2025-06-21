@@ -1,12 +1,15 @@
 package tests.utils;
 
 import models.common.BookingDates;
-import org.junit.jupiter.api.Assertions; // Explicitly import Assertions
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.Random;
 import java.util.regex.Pattern;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static tests.utils.assertions.CommonAssertions.assertStringMatchesRegex;
 
 
 /**
@@ -31,15 +34,16 @@ public final class DateUtils {
      */
     public static void validateDateFormatAndValidity(String dateString, String fieldName, String contextInfo) {
         // 1. Check format using regex
-        Assertions.assertTrue(DATE_REGEX_PATTERN.matcher(dateString).matches(),
-                String.format("%s '%s' does not match YYYY-MM-DD regex pattern %s", fieldName, dateString, contextInfo));
+        assertStringMatchesRegex(dateString, DATE_REGEX_PATTERN.pattern(), fieldName);
 
         // 2. Check actual date validity
         try {
             LocalDate.parse(dateString);
         } catch (DateTimeParseException e) {
-            Assertions.fail(String.format("%s '%s' is not a valid calendar date (e.g., 2024-02-30 is invalid) %s. Error: %s",
-                    fieldName, dateString, contextInfo, e.getMessage()));
+            String parseErrorMessage = String.format("%s '%s' is not a valid calendar date " +
+                            "(e.g., 2024-02-30 is invalid) %s. Error: %s",
+                    fieldName, dateString, contextInfo, e.getMessage());
+            assertThat(parseErrorMessage, true, is(false));
         }
     }
 

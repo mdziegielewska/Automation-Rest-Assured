@@ -3,10 +3,9 @@ package tests.utils.assertions;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
 
-import static constants.ApiConstants.ERROR_JSON_PATH;
 import static constants.ApiConstants.TOKEN_JSON_PATH;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static tests.utils.assertions.CommonAssertions.assertNotNullOrBlank;
+import static tests.utils.assertions.CommonAssertions.assertStringLength;
 
 
 /**
@@ -28,8 +27,7 @@ public final class AuthorizationAssertions {
 
         String token = jsonPath.getString(TOKEN_JSON_PATH);
 
-        assertThat("Token should not be null", token, is(notNullValue()));
-        assertThat("Token should not be empty", token, is(not(emptyString())));
-        assertThat("Token length should be 13 characters", token.length(), is(greaterThanOrEqualTo(13)));
+        assertNotNullOrBlank(token, "Token");
+        assertStringLength(token, "Token", 13, null);
     }
 }

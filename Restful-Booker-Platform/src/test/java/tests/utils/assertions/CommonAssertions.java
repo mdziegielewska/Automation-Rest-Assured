@@ -2,7 +2,9 @@ package tests.utils.assertions;
 
 import io.restassured.response.ValidatableResponse;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import static constants.ApiConstants.ERROR_JSON_PATH;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -76,8 +78,7 @@ public class CommonAssertions {
      * @param expectedMessage The specific message expected to be in the list.
      */
     public static void assertListContains(List<String> list, String expectedMessage) {
-        assertThat("List should not be null", list, is(notNullValue()));
-        assertThat("Object should be a List", list, isA(List.class));
+        assertIsNotEmpty(list, "List of messages");
         assertThat("List should contain the expected element", list, hasItem(expectedMessage));
     }
 
@@ -112,7 +113,6 @@ public class CommonAssertions {
     /**
      * Asserts that a given Number value is within a specified range (inclusive).
      * Also checks if the value is a Number type (e.g., Float, Double, Integer).
-     *
      * @param value The Number value to validate.
      * @param fieldName The name of the field being checked (for a readable assertion message).
      * @param min The minimum allowed value (inclusive).
@@ -127,5 +127,89 @@ public class CommonAssertions {
                 value.doubleValue(), greaterThanOrEqualTo(min));
         assertThat(String.format("%s (%s) should be less than or equal to %s", name, value, max),
                 value.doubleValue(), lessThanOrEqualTo(max));
+    }
+
+    /**
+     * Asserts that a given string's length is within a specified range (inclusive), or an exact length,
+     * or at least a minimum, or at most a maximum.
+     * @param value The string value whose length to validate.
+     * @param fieldName The name of the field (for a readable assertion message).
+     * @param minLength The minimum allowed length (inclusive). Pass {@code null} if no minimum is specified.
+     * @param maxLength The maximum allowed length (inclusive). Pass {@code null} if no maximum is specified.
+     */
+    public static void assertStringLength(String value, String fieldName, Integer minLength, Integer maxLength) {
+        String name = decapitalize(fieldName);
+
+        assertThat(String.format("%s should not be null to check its length", name), value, notNullValue());
+
+        int actualLength = value.length();
+
+        boolean hasMin = minLength != null;
+        boolean hasMax = maxLength != null;
+        boolean isExact = hasMin && hasMax && minLength.equals(maxLength);
+
+        if (isExact) {
+            assertThat(String.format("%s length should be exactly %d characters, but was %d",
+                            name, minLength, actualLength),
+                    actualLength, equalTo(minLength));
+        } else if (hasMin && hasMax) {
+            assertThat(String.format("%s length (%d) should be between %d and %d characters (inclusive)",
+                            name, actualLength, minLength, maxLength),
+                    actualLength, both(greaterThanOrEqualTo(minLength)).and(lessThanOrEqualTo(maxLength)));
+        } else if (hasMin) {
+            assertThat(String.format("%s length (%d) should be at least %d characters",
+                            name, actualLength, minLength),
+                    actualLength, greaterThanOrEqualTo(minLength));
+        } else if (hasMax) {
+            assertThat(String.format("%s length (%d) should be at most %d characters",
+                            name, actualLength, maxLength),
+                    actualLength, lessThanOrEqualTo(maxLength));
+        } else {
+            System.out.printf("Warning: No length bounds specified for %s%n", name);
+        }
+    }
+
+    /**
+     * Asserts that a given object is considered "empty".
+     * Checks for null, empty String, empty Collection, or empty Map.
+     * @param value The object to check for emptiness.
+     * @param fieldName The name of the field (for clear error messages).
+     */
+    public static void assertIsEmpty(Object value, String fieldName) {
+        String name = decapitalize(fieldName);
+
+        switch (value) {
+            case null -> assertThat(String.format("%s should be null or empty", name), null, nullValue());
+            case String str -> assertThat(String.format("%s should be empty", name), str, emptyString());
+            case Collection<?> collection ->
+                    assertThat(String.format("%s collection should be empty", name), collection, empty());
+            case Map<?, ?> map -> assertThat(String.format("%s map should be empty", name), map.entrySet(), empty());
+            default ->
+                    throw new IllegalArgumentException(String.format("assertIsEmpty does not support checking for" +
+                            " emptiness of type %s. Please define 'empty' for this type.",
+                            value.getClass().getSimpleName()));
+        }
+    }
+
+    /**
+     * Asserts that a given object is considered "not empty".
+     * Checks for non-null, non-empty String, non-empty Collection, or non-empty Map.
+     * @param value The object to check for non-emptiness.
+     * @param fieldName The name of the field (for clear error messages).
+     */
+    public static void assertIsNotEmpty(Object value, String fieldName) {
+        String name = decapitalize(fieldName);
+
+        assertThat(String.format("%s should not be null", name), value, notNullValue());
+
+        switch (value) {
+            case String str -> assertThat(String.format("%s should not be empty", name), str, not(emptyString()));
+            case Collection<?> collection ->
+                    assertThat(String.format("%s collection should not be empty", name), collection, not(empty()));
+            case Map<?, ?> map ->
+                    assertThat(String.format("%s map should not be empty", name), map.entrySet(), not(empty()));
+            default -> {
+            }
+        }
     }
 }

@@ -117,7 +117,7 @@ public class GetBookingsTests {
                 .extract()
                 .jsonPath().getList("bookings", BookingResponse.class);
 
-        assertBookingsListIsEmpty(bookings);
+        assertIsEmpty(bookings, "Bookings");
     }
 
     @Test

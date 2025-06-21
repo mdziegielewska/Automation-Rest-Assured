@@ -22,6 +22,7 @@ public class GetBrandingTests {
 
     private static BrandingResponse branding;
 
+    // --- Test Cases ---
     @BeforeAll
     public static void fetchBrandingData() {
         branding = givenRequest()

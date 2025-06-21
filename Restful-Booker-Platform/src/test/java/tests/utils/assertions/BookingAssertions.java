@@ -1,6 +1,5 @@
 package tests.utils.assertions;
 
-import models.common.BookingDates;
 import models.response.BookingResponse;
 
 import java.util.AbstractMap;
@@ -10,7 +9,6 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static tests.utils.DateUtils.validateDateFormatAndValidity;
 import static tests.utils.assertions.CommonAssertions.*;
 
 
@@ -50,26 +48,15 @@ public final class BookingAssertions {
         }
     }
 
-
     /**
      * Asserts that a list of BookingResponse objects is not null, is not empty, and meets a minimum expected size.
      * @param bookings The list of {@link BookingResponse} objects.
      * @param minimumExpectedSize The minimum number of bookings expected in the list.
      */
     public static void assertBookingsListNotEmptyAndMinimumSize(List<BookingResponse> bookings, int minimumExpectedSize) {
-        assertNotNullOrBlank(bookings, "Bookings");
-        assertThat("Bookings list should not be empty", bookings, is(not(empty())));
+        assertIsNotEmpty(bookings, "Bookings list");
+
         assertThat(java.text.MessageFormat.format("Bookings list size should be at least {0}",
                 minimumExpectedSize), bookings.size(), greaterThanOrEqualTo(minimumExpectedSize));
-    }
-
-    /**
-     * Asserts that a list of BookingResponse objects is not null and is empty.
-     * @param bookings The list of {@link BookingResponse} objects.
-     */
-    public static void assertBookingsListIsEmpty(List<BookingResponse> bookings) {
-        assertNotNullOrBlank(bookings, "Bookings");
-        assertThat("Bookings list should be empty", bookings, is(empty()));
-        assertThat("Bookings list size should be 0", bookings.size(), equalTo(0));
     }
 }

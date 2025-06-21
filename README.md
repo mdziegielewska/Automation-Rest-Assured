@@ -70,7 +70,7 @@ Once prerequisites are met, navigate to the project root (`Restful-Booker-Platfo
     * [x] Booking Update
     * [x] Booking Deletion
 * **Branding**
-    * [ ] Getting Branding
+    * [x] Getting Branding
     * [ ] Branding Update
 * **Message**
     * [ ] Getting Messages
