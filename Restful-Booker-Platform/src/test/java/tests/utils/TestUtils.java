@@ -173,4 +173,14 @@ public class TestUtils {
 
         return copy;
     }
+
+    /**
+     * Converts the first character of the given string to lowercase.
+     * @param s the input string to transform
+     * @return the transformed string with the first letter in lowercase
+     */
+    public static String decapitalize(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
+    }
 }

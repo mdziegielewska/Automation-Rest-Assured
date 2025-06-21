@@ -24,7 +24,7 @@ public class DeleteBookingTests {
     }
 
     @BeforeEach
-    public void setup(TestInfo testInfo) {
+    public void setup() {
         // to do: add booking creation in setup to make tests more independent
 
         retrievedBooking = getFirstBookingId(authToken, 1);

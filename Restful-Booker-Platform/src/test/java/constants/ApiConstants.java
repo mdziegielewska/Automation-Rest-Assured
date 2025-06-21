@@ -13,6 +13,7 @@ public final class ApiConstants {
     public static final String AUTH_LOGIN_ENDPOINT = "/auth/login";
     public static final String AUTH_VALIDATE_ENDPOINT = "/auth/validate";
     public static final String BOOKING_ENDPOINT = "/booking";
+    public static final String BRANDING_ENDPOINT = "/branding";
 
     // --- Common JSON Paths ---
     public static final String TOKEN_JSON_PATH = "token";

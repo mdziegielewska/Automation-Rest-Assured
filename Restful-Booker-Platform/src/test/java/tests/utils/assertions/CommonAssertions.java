@@ -7,6 +7,7 @@ import java.util.List;
 import static constants.ApiConstants.ERROR_JSON_PATH;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static tests.utils.TestUtils.decapitalize;
 
 
 /**
@@ -78,5 +79,53 @@ public class CommonAssertions {
         assertThat("List should not be null", list, is(notNullValue()));
         assertThat("Object should be a List", list, isA(List.class));
         assertThat("List should contain the expected element", list, hasItem(expectedMessage));
+    }
+
+    /**
+     * Asserts that the given string matches the provided regular expression pattern.
+     * @param value The string value to validate.
+     * @param regex The regular expression pattern to match.
+     * @param fieldName The name of the field being checked (for a readable assertion message).
+     */
+    public static void assertStringMatchesRegex(String value, String regex, String fieldName) {
+        assertThat(
+                String.format("%s should match the pattern: %s", fieldName, regex),
+                value,
+                matchesPattern(regex)
+        );
+    }
+
+    /**
+     * Asserts that a given object is not null and if is String — is not empty or blank.
+     * @param value The object to check.
+     * @param name The name of the field (for clear error messages).
+     */
+    public static void assertNotNullOrBlank(Object value, String name) {
+        String fieldName = decapitalize(name);
+
+        assertThat(String.format("%s should not be null", fieldName), value, notNullValue());
+        if (value instanceof String str) {
+            assertThat(String.format("%s should not be blank", fieldName), str.trim(), not(equalTo("")));
+        }
+    }
+
+    /**
+     * Asserts that a given Number value is within a specified range (inclusive).
+     * Also checks if the value is a Number type (e.g., Float, Double, Integer).
+     *
+     * @param value The Number value to validate.
+     * @param fieldName The name of the field being checked (for a readable assertion message).
+     * @param min The minimum allowed value (inclusive).
+     * @param max The maximum allowed value (inclusive).
+     */
+    public static void assertNumberWithinRange(Number value, String fieldName, double min, double max) {
+        String name = decapitalize(fieldName);
+
+        assertNotNullOrBlank(value, fieldName);
+        assertThat(String.format("%s should be a number", name), value, instanceOf(Number.class));
+        assertThat(String.format("%s (%s) should be greater than or equal to %s", name, value, min),
+                value.doubleValue(), greaterThanOrEqualTo(min));
+        assertThat(String.format("%s (%s) should be less than or equal to %s", name, value, max),
+                value.doubleValue(), lessThanOrEqualTo(max));
     }
 }

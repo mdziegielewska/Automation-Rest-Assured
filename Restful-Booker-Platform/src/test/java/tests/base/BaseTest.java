@@ -11,10 +11,9 @@ import models.request.LoginRequest;
 import static constants.ApiConstants.*;
 import static constants.ApiConstants.TOKEN_JSON_PATH;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static tests.utils.TestUtils.loadRequest;
 import static tests.utils.assertions.AuthorizationAssertions.assertSuccessfulLoginResponse;
+import static tests.utils.assertions.CommonAssertions.assertNotNullOrBlank;
 
 
 /**
@@ -60,7 +59,7 @@ public class BaseTest {
         String token = response.extract()
                 .path(TOKEN_JSON_PATH);
 
-        assertNotNull(token, "Failed to obtain a valid token during login.");
+        assertNotNullOrBlank(token, "token");
         return token;
     }
 }
