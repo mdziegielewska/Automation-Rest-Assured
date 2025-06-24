@@ -256,4 +256,15 @@ public class CommonAssertions {
         assertThat(String.format("%s objects do not match expected values.", objectName),
                 actualObject, is(equalTo(expectedObject)));
     }
+
+    /**
+     * Asserts the type of JSON field at a given path in the response body.
+     * @param response The ValidatableResponse object.
+     * @param jsonPath The JSON path to the field whose type is to be asserted (e.g., "messages[0].id").
+     * @param expectedType The expected Class type of the field (e.g., Integer.class, String.class, List.class).
+     * @param <T> The generic type parameter to specify the expected class.
+     */
+    public static <T> void assertJsonFieldType(ValidatableResponse response, String jsonPath, Class<T> expectedType) {
+        response.body(jsonPath, isA(expectedType));
+    }
 }

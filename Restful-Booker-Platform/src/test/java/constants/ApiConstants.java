@@ -14,6 +14,7 @@ public final class ApiConstants {
     public static final String AUTH_VALIDATE_ENDPOINT = "/auth/validate";
     public static final String BOOKING_ENDPOINT = "/booking";
     public static final String BRANDING_ENDPOINT = "/branding";
+    public static final String MESSAGE_ENDPOINT = "/message";
 
     // --- Common JSON Paths ---
     public static final String TOKEN_JSON_PATH = "token";
