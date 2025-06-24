@@ -265,6 +265,29 @@ public class CommonAssertions {
      * @param <T> The generic type parameter to specify the expected class.
      */
     public static <T> void assertJsonFieldType(ValidatableResponse response, String jsonPath, Class<T> expectedType) {
-        response.body(jsonPath, isA(expectedType));
+        String name = decapitalize(jsonPath);
+        response.body(name, isA(expectedType));
+    }
+
+    /**
+     * Asserts that a JSON field's string value starts with a given prefix and ends with a given suffix.
+     * @param response The RestAssured ValidatableResponse object.
+     * @param jsonPath The JSON path to the string field (e.g., "path").
+     * @param expectedPrefix The expected prefix of the string value.
+     * @param expectedSuffix The expected suffix of the string value.
+     */
+    public static void assertJsonPathPrefixAndSuffix(ValidatableResponse response, String jsonPath, String expectedPrefix, String expectedSuffix) {
+        response.body(jsonPath, startsWith(expectedPrefix));
+        response.body(jsonPath, endsWith(expectedSuffix));
+    }
+
+    /**
+     * Asserts that a specific value is present at a given JSON path in the response body, regardless of type.
+     * @param response The RestAssured ValidatableResponse object.
+     * @param jsonPath The JSON path to the field (e.g., "status", "error").
+     * @param expectedValue The expected value. Can be String, Integer, Boolean, etc.
+     */
+    public static void assertJsonValueEquals(ValidatableResponse response, String jsonPath, Object expectedValue) {
+        response.body(jsonPath, equalTo(expectedValue));
     }
 }

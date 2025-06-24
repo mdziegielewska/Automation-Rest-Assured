@@ -4,6 +4,9 @@ import models.response.BrandingResponse;
 import static tests.utils.assertions.CommonAssertions.*;
 
 
+/**
+ * Utility class containing assertion methods specifically for BrandingResponse responses.
+ */
 public class BrandingAssertions {
     private BrandingAssertions() {
         // hidden constructor
