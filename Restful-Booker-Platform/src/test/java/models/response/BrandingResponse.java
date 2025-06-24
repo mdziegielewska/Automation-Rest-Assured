@@ -4,7 +4,6 @@ import models.common.Address;
 import models.common.Contact;
 import models.common.Map;
 
-import java.util.HashMap;
 import java.util.Objects;
 
 
@@ -50,14 +49,12 @@ public class BrandingResponse {
         this.description = other.description;
         this.directions = other.directions;
 
-        // 2. For mutable Map: Create a new HashMap and copy all entries.
         if (other.map != null) {
             this.map = new Map(other.map);
         } else {
             this.map = null;
         }
 
-        // 3. For custom mutable objects (Contact, Address):
         if (other.contact != null) {
             this.contact = new Contact(other.contact);
         } else {

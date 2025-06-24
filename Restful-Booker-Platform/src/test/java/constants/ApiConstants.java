@@ -21,6 +21,7 @@ public final class ApiConstants {
     public static final String VALID_JSON_PATH = "valid";
     public static final String ERRORS_JSON_PATH = "errors";
     public static final String SUCCESS_JSON_PATH = "success";
+    public static final String FIELD_ERRORS_PATH = "fieldErrors";
 
     // --- Authorization Error Messages ---
     public static final String INVALID_CREDENTIALS_ERROR_MESSAGE = "Invalid credentials";
@@ -38,6 +39,9 @@ public final class ApiConstants {
     public static final String AUTHENTICATION_REQUIRED_ERROR_MESSAGE = "Authentication required";
     public static final String UNEXPECTED_ERROR_MESSAGE = "An unexpected error occurred";
     public static final String BOOKING_DELETION_GENERIC_FAILURE_ERROR_MESSAGE = "Failed to delete booking";
+    public static final String PHONE_NOT_NULL_ERROR_MESSAGE = "Phone should not be null";
+    public static final String INCORRECT_URL_FORMAT_ERROR_MESSAGE = "Url should be a correct url format";
+    public static final String NAME_BLANK_ERROR_MESSAGE = "Name should not be blank";
 
     // --- Test Data Paths ---
     public static final String CORRECT_LOGIN_PATH = "testData/authorization/correctLoginData.json";

@@ -50,6 +50,7 @@ public class CommonAssertions {
         response.statusCode(500)
                 .body(equalTo("[]"));
     }
+
     /**
      * Asserts that the response status code is 500 (Internal Server Error)
      * and checks the error message in the response body.

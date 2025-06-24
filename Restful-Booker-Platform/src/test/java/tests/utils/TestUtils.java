@@ -1,6 +1,9 @@
 package tests.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import models.common.Address;
+import models.common.Contact;
+import models.common.Map;
 import models.request.BookingRequest;
 import models.response.BookingResponse;
 import models.response.BrandingResponse;
@@ -183,6 +186,46 @@ public class TestUtils {
     }
 
     /**
+     * Creates a shallow copy of the given BrandingResponse object.
+     * @param original the original BrandingResponse to clone
+     * @return a new BrandingResponse object with the same field values
+     */
+    public static BrandingResponse cloneBranding(BrandingResponse original) {
+        BrandingResponse copy = new BrandingResponse();
+        copy.setName(original.getName());
+        copy.setLogoUrl(original.getLogoUrl());
+        copy.setDescription(original.getDescription());
+        copy.setDirections(original.getDirections());
+
+        if (original.getMap() != null) {
+            Map map = new Map();
+            map.setLatitude(original.getMap().getLatitude());
+            map.setLongitude(original.getMap().getLongitude());
+            copy.setMap(map);
+        }
+
+        if (original.getContact() != null) {
+            Contact contact = new Contact();
+            contact.setPhone(original.getContact().getPhone());
+            contact.setEmail(original.getContact().getEmail());
+            contact.setName(original.getContact().getName());
+            copy.setContact(contact);
+        }
+
+        if (original.getAddress() != null) {
+            Address address = new Address();
+            address.setLine1(original.getAddress().getLine1());
+            address.setLine2(original.getAddress().getLine2());
+            address.setPostTown(original.getAddress().getPostTown());
+            address.setCounty(original.getAddress().getCounty());
+            address.setPostCode(original.getAddress().getPostCode());
+            copy.setAddress(address);
+        }
+
+        return copy;
+    }
+
+    /**
      * Converts the first character of the given string to lowercase.
      * @param s the input string to transform
      * @return the transformed string with the first letter in lowercase
@@ -195,8 +238,9 @@ public class TestUtils {
     /**
      * Polls the branding endpoint until the description matches the expected value,
      * or a timeout occurs.
-     * @param expectedDescription The description we expect to see after the update.
-     * @param maxWaitSeconds      Maximum time to wait for the change.
+     * @param isUpdatedCondition A Predicate that defines the condition for the BrandingResponse to be considered
+     * "updated". The polling will stop once this condition evaluates to true.
+     * @param maxWaitSeconds Maximum time to wait for the change.
      * @param pollIntervalSeconds How often to check.
      * @return The updated BrandingResponse if found within the timeout.
      * @throws RuntimeException if the expected change is not observed within the timeout.
@@ -225,7 +269,7 @@ public class TestUtils {
                             lastResponse.set(currentBranding);
 
                             if (currentBranding != null && isUpdatedCondition.test(currentBranding)) {
-                                System.out.println("✅ Branding update confirmed by condition.");
+                                System.out.println("Branding update confirmed by condition.");
                                 return true;
                             } else {
                                 System.out.printf("Branding not yet updated. Current description: '%s'%n",
