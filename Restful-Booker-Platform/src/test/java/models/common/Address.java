@@ -32,6 +32,14 @@ public class Address {
         this.postCode = postCode;
     }
 
+    public Address(Address other) {
+        this.line1 = other.line1;
+        this.line2 = other.line2;
+        this.postTown = other.postTown;
+        this.county = other.county;
+        this.postCode = other.postCode;
+    }
+
     // --- Getters ---
     public String getLine1() { return line1; }
     public String getLine2() { return line2; }

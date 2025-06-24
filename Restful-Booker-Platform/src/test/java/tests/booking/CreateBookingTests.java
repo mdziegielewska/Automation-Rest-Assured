@@ -30,9 +30,9 @@ public class CreateBookingTests {
      */
     private static Stream<Arguments> bookingDataProvider() {
         return Stream.of(
-                Arguments.of(buildBookingRequest(CORRECT_BOOKING_PATH, "1")),
-                Arguments.of(buildBookingRequest(CORRECT_BOOKING_PATH, "2")),
-                Arguments.of(buildBookingRequest(CORRECT_BOOKING_PATH, "3"))
+                Arguments.of(buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "1")),
+                Arguments.of(buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "2")),
+                Arguments.of(buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "3"))
         );
     }
 
@@ -52,7 +52,7 @@ public class CreateBookingTests {
     @Test
     @DisplayName("Should not book a room with the same date twice")
     public void testBookingSameRoomSameDates() {
-         BookingRequest bookingRequest = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+         BookingRequest bookingRequest = buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "1");
 
         ValidatableResponse response = givenRequest()
                 .body(bookingRequest)
@@ -106,27 +106,27 @@ public class CreateBookingTests {
      */
     private static Stream<Arguments> invalidFieldsProvider() {
         // Scenario 1: Null roomid
-        BookingRequest nullRoomId = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        BookingRequest nullRoomId = buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "1");
         nullRoomId.setRoomid(null);
 
         // Scenario 2: Short firstname
-        BookingRequest shortFirstname = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        BookingRequest shortFirstname = buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "1");
         shortFirstname.setFirstname("Jo");
 
         // Scenario 3: Empty lastname string
-        BookingRequest emptyLastname = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        BookingRequest emptyLastname = buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "1");
         emptyLastname.setLastname("");
 
         // Scenario 4: Empty email
-        BookingRequest emptyEmail = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        BookingRequest emptyEmail = buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "1");
         emptyEmail.setEmail("");
 
         // Scenario 5: Null phone
-        BookingRequest nullPhone = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        BookingRequest nullPhone = buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "1");
         nullPhone.setPhone(null);
 
         // Scenario 6: Null checkout date
-        BookingRequest nullCheckoutDate = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        BookingRequest nullCheckoutDate = buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "1");
         nullCheckoutDate.setBookingdates(new BookingDates(nullCheckoutDate.getBookingdates().getCheckin(), null));
 
         return Stream.of(
@@ -158,7 +158,7 @@ public class CreateBookingTests {
     @DisplayName("Should handle booking non-existent room id")
     public void testBookingForNonExistentRoomId() {
         String nonExistentRoomId = generate10DigitNumericString();
-        BookingRequest bookingForNonExistentRoom = buildBookingRequest(CORRECT_BOOKING_PATH, nonExistentRoomId);
+        BookingRequest bookingForNonExistentRoom = buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, nonExistentRoomId);
 
         List<String> errors = givenRequest()
                 .body(bookingForNonExistentRoom)
@@ -179,17 +179,17 @@ public class CreateBookingTests {
     private static Stream<Arguments> boundaryDatesProvider() {
         // Scenario 1: Checkin and Checkout are the same day
         LocalDate today = LocalDate.now();
-        BookingRequest sameDayBooking = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        BookingRequest sameDayBooking = buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "1");
         sameDayBooking.setBookingdates(new BookingDates(today.toString(), today.toString()));
 
         // Scenario 2: Checkout date is before Checkin date
-        BookingRequest invalidDateRangeBooking = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        BookingRequest invalidDateRangeBooking = buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "1");
         invalidDateRangeBooking.setBookingdates(new BookingDates(today.toString(), today.minusDays(10).toString()));
 
         // Scenario 3: Booking far in the future
         LocalDate futureCheckin = LocalDate.now().plusYears(generateLongWithDigits(2));
         LocalDate futureCheckout = futureCheckin.plusDays(2);
-        BookingRequest futureBooking = buildBookingRequest(CORRECT_BOOKING_PATH, "1");
+        BookingRequest futureBooking = buildBookingRequest(CORRECT_BOOKING_CREATION_PATH, "1");
         futureBooking.setBookingdates(new BookingDates(futureCheckin.toString(), futureCheckout.toString()));
 
         return Stream.of(

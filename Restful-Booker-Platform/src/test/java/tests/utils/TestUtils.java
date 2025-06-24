@@ -3,6 +3,7 @@ package tests.utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import models.request.BookingRequest;
 import models.response.BookingResponse;
+import models.response.BrandingResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,11 +12,18 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static constants.ApiConstants.BOOKING_ENDPOINT;
+import static constants.ApiConstants.BRANDING_ENDPOINT;
 import static tests.base.BaseTest.givenRequest;
 import static tests.utils.DateUtils.generateRandomBookingDates;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.awaitility.Awaitility;
 
 
 /**
@@ -182,5 +190,60 @@ public class TestUtils {
     public static String decapitalize(String s) {
         if (s == null || s.isEmpty()) return s;
         return Character.toLowerCase(s.charAt(0)) + s.substring(1);
+    }
+
+    /**
+     * Polls the branding endpoint until the description matches the expected value,
+     * or a timeout occurs.
+     * @param expectedDescription The description we expect to see after the update.
+     * @param maxWaitSeconds      Maximum time to wait for the change.
+     * @param pollIntervalSeconds How often to check.
+     * @return The updated BrandingResponse if found within the timeout.
+     * @throws RuntimeException if the expected change is not observed within the timeout.
+     */
+    public static BrandingResponse waitForBrandingUpdate(Predicate<BrandingResponse> isUpdatedCondition,
+                                                         int maxWaitSeconds,
+                                                         int pollIntervalSeconds) {
+        System.out.printf("Polling for branding for up to %d seconds, checking every %d seconds...%n",
+                maxWaitSeconds, pollIntervalSeconds);
+        AtomicReference<BrandingResponse> lastResponse = new AtomicReference<>();
+
+        try {
+            Awaitility.await()
+                    .atMost(maxWaitSeconds, TimeUnit.SECONDS)
+                    .pollInterval(pollIntervalSeconds, TimeUnit.SECONDS)
+                    .until(() -> {
+                        try {
+                            BrandingResponse currentBranding =  givenRequest()
+                                    .when()
+                                    .get(BRANDING_ENDPOINT)
+                                    .then()
+                                    .statusCode(200)
+                                    .extract()
+                                    .as(BrandingResponse.class);
+
+                            lastResponse.set(currentBranding);
+
+                            if (currentBranding != null && isUpdatedCondition.test(currentBranding)) {
+                                System.out.println("✅ Branding update confirmed by condition.");
+                                return true;
+                            } else {
+                                System.out.printf("Branding not yet updated. Current description: '%s'%n",
+                                        currentBranding != null ? currentBranding.getDescription() : "null");
+                                return false;
+                            }
+                        } catch (Exception e) {
+                            System.out.printf("Error during polling: %s%n", e.getMessage());
+                            return false;
+                        }
+                    });
+        } catch (org.awaitility.core.ConditionTimeoutException e) {
+            throw new RuntimeException(
+                    String.format("Branding update condition was not met in time. Last branding: %s",
+                            lastResponse.get() != null ? lastResponse.get().toString() : "null"),
+                    e
+            );
+        }
+        return lastResponse.get();
     }
 }

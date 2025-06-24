@@ -23,6 +23,11 @@ public class Map {
         this.longitude = longitude;
     }
 
+    public Map(Map other) { // <-- ADDED COPY CONSTRUCTOR
+        this.latitude = other.latitude;
+        this.longitude = other.longitude;
+    }
+
     // --- Getters ---
     public float getLatitude() { return latitude; }
     public float getLongitude() { return longitude; }

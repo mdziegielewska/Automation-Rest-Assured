@@ -26,6 +26,12 @@ public class Contact {
         this.email = email;
     }
 
+    public Contact(Contact other) {
+        this.name = other.name;
+        this.phone = other.phone;
+        this.email = other.email;
+    }
+
     // --- Getters ---
     public String getName() { return name; }
     public String getPhone() { return phone; }

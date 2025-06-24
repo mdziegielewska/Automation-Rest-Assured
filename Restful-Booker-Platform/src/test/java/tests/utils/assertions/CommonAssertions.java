@@ -212,4 +212,47 @@ public class CommonAssertions {
             }
         }
     }
+
+    /**
+     * Asserts that a given numeric value (Float, Double, Integer, etc.) is approximately equal
+     * to an expected value within a specified delta. All numbers are internally converted to
+     * double for robust comparison using Hamcrest's closeTo matcher.
+     * @param expectedValue The expected numeric value.
+     * @param actualValue The actual numeric value.
+     * @param delta The maximum allowed absolute difference between expected and actual for them to be considered equal. Must be a positive value.
+     * @param fieldName A descriptive name for the field being asserted (e.g., "Latitude", "Price").
+     * @throws IllegalArgumentException if expectedValue or actualValue are null, or delta is negative.
+     */
+    public static void assertNumericEqualsWithDelta(Number expectedValue, Number actualValue, double delta, String fieldName) {
+        String name = decapitalize(fieldName);
+
+        if (delta < 0) {
+            throw new IllegalArgumentException(String.format("Delta for %s must be non-negative.", name));
+        }
+
+        // Convert both to double for comparison as double offers higher precision and `closeTo` works well with it.
+        double expectedDouble = expectedValue.doubleValue();
+        double actualDouble = actualValue.doubleValue();
+
+        assertThat(
+                String.format("%s should be approximately equal to %f (within delta %f)", name, expectedDouble, delta),
+                actualDouble,
+                closeTo(expectedDouble, delta)
+        );
+    }
+
+    /**
+     * Asserts that two objects are equal based on their overridden {@code equals()} method.
+     * @param <T> The type of the objects being compared.
+     * @param expectedObject The expected object.
+     * @param actualObject The actual object obtained from an operation.
+     * @param objectName A descriptive name for the type of object being compared (e.g., "BrandingResponse", "User Object").
+     */
+    public static <T> void assertObjectsAreEqual(T expectedObject, T actualObject, String objectName) {
+        String name = decapitalize(objectName);
+
+        assertNotNullOrBlank(actualObject, name);
+        assertThat(String.format("%s objects do not match expected values.", objectName),
+                actualObject, is(equalTo(expectedObject)));
+    }
 }

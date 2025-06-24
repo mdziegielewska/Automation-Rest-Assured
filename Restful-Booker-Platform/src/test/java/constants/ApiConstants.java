@@ -40,7 +40,8 @@ public final class ApiConstants {
     public static final String BOOKING_DELETION_GENERIC_FAILURE_ERROR_MESSAGE = "Failed to delete booking";
 
     // --- Test Data Paths ---
-    public static final String CORRECT_LOGIN_PATH = "testData/authorization/correctData.json";
-    public static final String INCORRECT_LOGIN_PATH = "testData/authorization/incorrectData.json";
-    public static final String CORRECT_BOOKING_PATH = "testData/booking/correctData.json";
+    public static final String CORRECT_LOGIN_PATH = "testData/authorization/correctLoginData.json";
+    public static final String INCORRECT_LOGIN_PATH = "testData/authorization/incorrectLoginData.json";
+    public static final String CORRECT_BOOKING_CREATION_PATH = "testData/booking/bookingCreationData.json";
+    public static final String MULTIPLE_BRANDING_FIELDS_UPDATE_PATH = "testData/branding/multipleBrandingFieldsUpdateData.json";
 }
