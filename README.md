@@ -74,7 +74,7 @@ Once prerequisites are met, navigate to the project root (`Restful-Booker-Platfo
     * [x] Branding Update
 * **Message**
     * [x] Getting Messages
-    * [ ] Getting Message
+    * [x] Getting Message
     * [ ] Unread Count
     * [ ] Message Creation
     * [ ] Marking as Read
