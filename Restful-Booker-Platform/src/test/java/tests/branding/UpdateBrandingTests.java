@@ -109,7 +109,14 @@ public class UpdateBrandingTests {
 
         assertJsonBooleanValue(response, SUCCESS_JSON_PATH, true);
 
-        BrandingResponse updatedBranding = waitForBrandingUpdate(
+        BrandingResponse updatedBranding = waitForCondition(
+                () -> givenRequest()
+                        .when()
+                        .get(BRANDING_ENDPOINT)
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .as(BrandingResponse.class),
                 branding -> branding != null && newDescription.equals(branding.getDescription()),
                 maxWaitSeconds,
                 pollIntervalSeconds);
@@ -133,7 +140,14 @@ public class UpdateBrandingTests {
 
         assertJsonBooleanValue(response, SUCCESS_JSON_PATH, true);
 
-        BrandingResponse updatedBranding = waitForBrandingUpdate(
+        BrandingResponse updatedBranding = waitForCondition(
+                () -> givenRequest()
+                        .when()
+                        .get(BRANDING_ENDPOINT)
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .as(BrandingResponse.class),
                 branding -> (branding != null) && branding.equals(brandingToUpdate),
                 maxWaitSeconds,
                 pollIntervalSeconds
@@ -155,7 +169,14 @@ public class UpdateBrandingTests {
 
         assertJsonBooleanValue(response, SUCCESS_JSON_PATH, true);
 
-        BrandingResponse updatedBranding = waitForBrandingUpdate(
+        BrandingResponse updatedBranding = waitForCondition(
+                () -> givenRequest()
+                        .when()
+                        .get(BRANDING_ENDPOINT)
+                        .then()
+                        .statusCode(200)
+                        .extract()
+                        .as(BrandingResponse.class),
                 newBranding -> (newBranding != null) && newBranding.equals(originalBranding),
                 maxWaitSeconds,
                 pollIntervalSeconds
@@ -165,6 +186,11 @@ public class UpdateBrandingTests {
         assertBrandingMatchesExpected(originalBranding, updatedBranding);
     }
 
+    /**
+     * Provides invalid branding update scenarios.
+     * This method generates a stream of arguments for parameterized tests,
+     * each representing a distinct invalid state of the BrandingResponse.
+    */
     private Stream<Arguments> invalidDataProvider() {
         BrandingResponse branding1 = cloneBranding(originalBranding);
         branding1.setName("");

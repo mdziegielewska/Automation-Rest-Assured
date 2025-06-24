@@ -9,12 +9,15 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static constants.ApiConstants.*;
 import static tests.base.BaseTest.getAuthToken;
 import static tests.base.BaseTest.givenRequest;
 import static tests.utils.TestUtils.*;
+import static tests.utils.assertions.BookingAssertions.assertSingleBookingDetails;
 import static tests.utils.assertions.CommonAssertions.*;
 
 
@@ -24,6 +27,8 @@ public class UpdateBookingTests {
     // --- Reusable Token for Valid Scenarios ---
     private static String authToken;
     private static BookingResponse retrievedBooking;
+    private static final int maxWaitSeconds = 60;
+    private static final int pollIntervalSeconds = 5;
 
     // --- Test Cases ---
     @BeforeAll
@@ -32,26 +37,19 @@ public class UpdateBookingTests {
     }
 
     @BeforeEach
-    public void setup(TestInfo testInfo) {
-        // to do: add booking creation in setup to make tests more independent
-
+    public void setup() {
         retrievedBooking = getFirstBookingId(authToken, 1);
         assertNotNullOrBlank(retrievedBooking, "Booking Response");
-
-        if (testInfo.getDisplayName().equals("testBookingUpdateSameData")) {
-            return;
-        }
-
-        retrievedBooking.setFirstname("Changed");
-        retrievedBooking.setDepositpaid(true);
     }
 
     @Test
     @DisplayName("Should return 401 without authentication")
     public void testUpdateWithoutAuthentication() {
+        BookingResponse bookingToUpdate = cloneBooking(retrievedBooking);
+
         ValidatableResponse response = givenRequest()
-                .pathParams("bookingId", retrievedBooking.getBookingid())
-                .body(retrievedBooking)
+                .pathParams("bookingId", bookingToUpdate.getBookingid())
+                .body(bookingToUpdate)
                 .when()
                 .put(String.format("%s/%s", BOOKING_ENDPOINT, "{bookingId}"))
                 .then();
@@ -62,10 +60,12 @@ public class UpdateBookingTests {
     @Test
     @DisplayName("Should return 500 when token is invalid")
     public void testUpdateWithInvalidToken() {
+        BookingResponse bookingToUpdate = cloneBooking(retrievedBooking);
+
         ValidatableResponse response = givenRequest()
                 .header("Cookie", "token=test123")
-                .pathParams("bookingId", retrievedBooking.getBookingid())
-                .body(retrievedBooking)
+                .pathParams("bookingId", bookingToUpdate.getBookingid())
+                .body(bookingToUpdate)
                 .when()
                 .put(String.format("%s/%s", BOOKING_ENDPOINT, "{bookingId}"))
                 .then();
@@ -76,29 +76,89 @@ public class UpdateBookingTests {
     @Test
     @DisplayName("Should update booking successfully")
     public void testSuccessfulBookingUpdate() {
+        BookingResponse bookingToUpdate = cloneBooking(retrievedBooking);
+        bookingToUpdate.setFirstname("Changed");
+        bookingToUpdate.setDepositpaid(true);
+
         ValidatableResponse response = givenRequest()
                 .header("Cookie", String.format("token=%s", authToken))
-                .pathParams("bookingId", retrievedBooking.getBookingid())
-                .body(retrievedBooking)
+                .pathParams("bookingId", bookingToUpdate.getBookingid())
+                .body(bookingToUpdate)
                 .when()
                 .put(String.format("%s/%s", BOOKING_ENDPOINT, "{bookingId}"))
                 .then();
 
         assertJsonBooleanValue(response, SUCCESS_JSON_PATH, true);
+
+        BookingResponse updatedBooking = waitForCondition(
+                () -> {
+                    List<BookingResponse> currentBookingsList = givenRequest()
+                            .header("Cookie", String.format("token=%s", authToken))
+                            .queryParam("roomid", bookingToUpdate.getRoomid())
+                            .when()
+                            .get(BOOKING_ENDPOINT)
+                            .then()
+                            .statusCode(200)
+                            .extract()
+                            .jsonPath()
+                            .getList("bookings", BookingResponse.class);
+
+                    Optional<BookingResponse> foundBooking = currentBookingsList.stream()
+                            .filter(b -> b.getBookingid().equals(bookingToUpdate.getBookingid()))
+                            .findFirst();
+
+                    return foundBooking.orElse(null);
+                },
+                currentBooking -> (currentBooking != null) && currentBooking.equals(bookingToUpdate),
+                maxWaitSeconds,
+                pollIntervalSeconds
+        );
+
+        assertNotNullOrBlank(updatedBooking, "Booking Response");
+        assertSingleBookingDetails(updatedBooking,1);
     }
 
     @Test
     @DisplayName("Should update booking with the same data successfully")
     public void testBookingUpdateSameData() {
+        BookingResponse bookingToUpdate = cloneBooking(retrievedBooking);
+
         ValidatableResponse response = givenRequest()
                 .header("Cookie", String.format("token=%s", authToken))
-                .pathParams("bookingId", retrievedBooking.getBookingid())
-                .body(retrievedBooking)
+                .pathParams("bookingId", bookingToUpdate.getBookingid())
+                .body(bookingToUpdate)
                 .when()
                 .put(String.format("%s/%s", BOOKING_ENDPOINT, "{bookingId}"))
                 .then();
 
         assertJsonBooleanValue(response, SUCCESS_JSON_PATH, true);
+
+        BookingResponse updatedBooking = waitForCondition(
+                () -> {
+                    List<BookingResponse> currentBookingsList = givenRequest()
+                            .header("Cookie", String.format("token=%s", authToken))
+                            .queryParam("roomid", bookingToUpdate.getRoomid())
+                            .when()
+                            .get(BOOKING_ENDPOINT)
+                            .then()
+                            .statusCode(200)
+                            .extract()
+                            .jsonPath()
+                            .getList("bookings", BookingResponse.class);
+
+                    Optional<BookingResponse> foundBooking = currentBookingsList.stream()
+                            .filter(b -> b.getBookingid().equals(bookingToUpdate.getBookingid()))
+                            .findFirst();
+
+                    return foundBooking.orElse(null);
+                },
+                currentBooking -> (currentBooking != null) && currentBooking.equals(bookingToUpdate),
+                maxWaitSeconds,
+                pollIntervalSeconds
+        );
+
+        assertNotNullOrBlank(updatedBooking, "Booking Response");
+        assertSingleBookingDetails(updatedBooking,1);
     }
 
     @Test
@@ -128,9 +188,11 @@ public class UpdateBookingTests {
     @Test
     @DisplayName("Should return 500 when request has empty body")
     public void testUpdateWithEmptyRequestBody() {
+        BookingResponse bookingToUpdate = cloneBooking(retrievedBooking);
+
         ValidatableResponse response = givenRequest()
                 .header("Cookie", String.format("token=%s", authToken))
-                .pathParams("bookingId", retrievedBooking.getBookingid())
+                .pathParams("bookingId", bookingToUpdate.getBookingid())
                 .when()
                 .put(String.format("%s/%s", BOOKING_ENDPOINT, "{bookingId}"))
                 .then();
@@ -141,12 +203,13 @@ public class UpdateBookingTests {
     @Test
     @DisplayName("Should handle booking non-existent booking id")
     public void testUpdateNonExistentBooking() {
+        BookingResponse bookingToUpdate = cloneBooking(retrievedBooking);
         Integer nonExistentBookingId = Math.toIntExact(generateLongWithDigits(5));
 
         ValidatableResponse response = givenRequest()
                 .header("Cookie", String.format("token=%s", authToken))
                 .pathParams("bookingId", nonExistentBookingId)
-                .body(retrievedBooking)
+                .body(bookingToUpdate)
                 .when()
                 .put(String.format("%s/%s", BOOKING_ENDPOINT, "{bookingId}"))
                 .then();

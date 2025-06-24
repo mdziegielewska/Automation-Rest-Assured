@@ -9,17 +9,13 @@ import models.response.BookingResponse;
 import models.response.BrandingResponse;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 import static constants.ApiConstants.BOOKING_ENDPOINT;
-import static constants.ApiConstants.BRANDING_ENDPOINT;
 import static tests.base.BaseTest.givenRequest;
 import static tests.utils.DateUtils.generateRandomBookingDates;
 
@@ -27,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 
 
 /**
@@ -43,23 +40,6 @@ public class TestUtils {
      * Reusable ObjectMapper instance for efficient JSON processing.
      */
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    /**
-     * Reads the entire content of a specified resource file into a single String.
-     * @param filePath The path to the resource file (e.g., "testData/myFile.json").
-     * @return The content of the file as a String.
-     * @throws IOException If the file cannot be found or read.
-     */
-    public static String readResourceFile(String filePath) throws IOException {
-        try (InputStream inputStream = TestUtils.class.getClassLoader().getResourceAsStream(filePath)) {
-            if (inputStream == null) {
-                throw new IOException(String.format("Resource file not found on classpath: %s", filePath));
-            }
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-                return reader.lines().collect(Collectors.joining(System.lineSeparator()));
-            }
-        }
-    }
 
     /**
      * Loads and deserializes a JSON object of a specified type from a file located in the classpath.
@@ -236,21 +216,20 @@ public class TestUtils {
     }
 
     /**
-     * Polls the branding endpoint until the description matches the expected value,
-     * or a timeout occurs.
-     * @param isUpdatedCondition A Predicate that defines the condition for the BrandingResponse to be considered
-     * "updated". The polling will stop once this condition evaluates to true.
-     * @param maxWaitSeconds Maximum time to wait for the change.
-     * @param pollIntervalSeconds How often to check.
-     * @return The updated BrandingResponse if found within the timeout.
-     * @throws RuntimeException if the expected change is not observed within the timeout.
+     * Polls a generic API endpoint until a specified condition is met or a timeout occurs.
+     * @param <T> The type of the expected response body.
+     * @param apiCall The Supplier that encapsulates the API request and extracts the response into type T.
+     * @param isConditionMet A Predicate that defines the condition for the response to be considered "updated" or "expected".
+     * @param maxWaitSeconds Maximum time to wait for the condition to be met.
+     * @param pollIntervalSeconds How often to check the condition (polling interval).
+     * @return The response of type T that satisfied the condition within the timeout.
+     * @throws RuntimeException if the expected condition is not met within the timeout.
      */
-    public static BrandingResponse waitForBrandingUpdate(Predicate<BrandingResponse> isUpdatedCondition,
-                                                         int maxWaitSeconds,
-                                                         int pollIntervalSeconds) {
-        System.out.printf("Polling for branding for up to %d seconds, checking every %d seconds...%n",
-                maxWaitSeconds, pollIntervalSeconds);
-        AtomicReference<BrandingResponse> lastResponse = new AtomicReference<>();
+    public static <T> T waitForCondition(Supplier<T> apiCall,
+                                         Predicate<T> isConditionMet,
+                                         int maxWaitSeconds,
+                                         int pollIntervalSeconds) {
+        AtomicReference<T> lastResponse = new AtomicReference<>();
 
         try {
             Awaitility.await()
@@ -258,33 +237,20 @@ public class TestUtils {
                     .pollInterval(pollIntervalSeconds, TimeUnit.SECONDS)
                     .until(() -> {
                         try {
-                            BrandingResponse currentBranding =  givenRequest()
-                                    .when()
-                                    .get(BRANDING_ENDPOINT)
-                                    .then()
-                                    .statusCode(200)
-                                    .extract()
-                                    .as(BrandingResponse.class);
+                            T currentResponse = apiCall.get();
 
-                            lastResponse.set(currentBranding);
+                            lastResponse.set(currentResponse);
 
-                            if (currentBranding != null && isUpdatedCondition.test(currentBranding)) {
-                                System.out.println("Branding update confirmed by condition.");
-                                return true;
-                            } else {
-                                System.out.printf("Branding not yet updated. Current description: '%s'%n",
-                                        currentBranding != null ? currentBranding.getDescription() : "null");
-                                return false;
-                            }
+                            return currentResponse != null && isConditionMet.test(currentResponse);
                         } catch (Exception e) {
-                            System.out.printf("Error during polling: %s%n", e.getMessage());
+                            System.out.printf("Error during polling attempt: %s%n", e.getMessage());
                             return false;
                         }
                     });
-        } catch (org.awaitility.core.ConditionTimeoutException e) {
+        } catch (ConditionTimeoutException e) {
             throw new RuntimeException(
-                    String.format("Branding update condition was not met in time. Last branding: %s",
-                            lastResponse.get() != null ? lastResponse.get().toString() : "null"),
+                    String.format("Condition was not met within %d seconds. Last observed response: %s",
+                            maxWaitSeconds, lastResponse.get() != null ? lastResponse.get().toString() : "null"),
                     e
             );
         }
